@@ -10,7 +10,7 @@
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://api.praxos.ai"
     }
   ],
   "security": [
@@ -19,9 +19,209 @@
     }
   ],
   "paths": {
+    "/add-source": {
+      "post": {
+        "summary": "Upload a PDF file for processing",
+        "description": "Uploads a PDF file, stores it in praxos, and initiates indexing",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "PDF file to upload"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File successfully uploaded and indexing started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddSourceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid file or missing file",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid API key or reached maximum sources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddSourceErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/query": {
+      "post": {
+        "summary": "Submit query jobs for processing",
+        "description": "Submit one or more query jobs to process sources using specified interfaces. If a request is rejected, niehter of the queries will be processed.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Query jobs successfully submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuerySuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid request body or IDs (source_ids, interface_id).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseWithDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get-results": {
+      "post": {
+        "summary": "Get results for specified jobs",
+        "description": "Retrieve results for one or more jobs by their IDs",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetResultsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved job results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetResultsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+
+
     "/plants": {
       "get": {
-        "description": "Returns all plants from the system that the user has access to",
+        "description": "Returns all plant from the system that the user has access to",
         "parameters": [
           {
             "name": "limit",
@@ -154,6 +354,151 @@
   },
   "components": {
     "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        },
+        "required": ["error"]
+      },
+      "ErrorResponseWithDetails": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Detailed error messages"
+          }
+        },
+        "required": ["error"]
+      },
+
+
+      "AddSourceResponse": {
+        "type": "object",
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "description": "ID of the created source"
+          }
+        },
+        "required": ["source_id"]
+      },
+      "QueryRequest": {
+        "type": "object",
+        "properties": {
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Array of source IDs to query"
+                },
+                "interface_id": {
+                  "type": "string",
+                  "description": "ID of the interface to use for the query"
+                }
+              },
+              "required": ["source_ids", "interface_id"]
+            }
+          }
+        },
+        "required": ["queries"]
+      },
+
+      "QuerySuccessResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Success message"
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "interface_id": {
+                  "type": "string"
+                },
+                "job_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": ["message", "queries"]
+      },
+
+      "GetResultsRequest": {
+        "type": "object",
+        "properties": {
+          "job_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of job IDs to retrieve results for"
+          }
+        },
+        "required": ["job_ids"]
+      },
+
+      "JobResult": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["not_found", "initialized", "sources_indexing", "processing", "success"],
+            "description": "Status of the job"
+          },
+          "results": {
+            "type": "object",
+            "description": "Job results (only present when status is 'success'). It will match to the interface schema.",
+            "additionalProperties": true
+          }
+        },
+        "required": ["status"]
+      },
+
+      "GetResultsResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JobResult"
+            },
+            "description": "Map of job IDs to their results"
+          }
+        },
+        "required": ["results"]
+      },
+
+
+
+
       "Plant": {
         "required": [
           "name"
@@ -208,9 +553,11 @@
       }
     },
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "API-key",
+        "description": "API key for authentication"
       }
     }
   }
