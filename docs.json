@@ -31,14 +31,10 @@
       },
       {
         "tab": "Guides",
-        "groups": [
-          {
-            "group": "Get Started",
-            "pages": [
-              "api-key",
-              "sources"
-            ]
-          }
+        "pages": [
+          "api-key",
+          "interface-id",
+          "sources"
         ]
       }
     ],
