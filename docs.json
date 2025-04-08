@@ -35,7 +35,8 @@
           {
             "group": "Get Started",
             "pages": [
-              "api-key"
+              "api-key",
+              "sources"
             ]
           }
         ]
