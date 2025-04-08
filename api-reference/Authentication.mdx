@@ -1,0 +1,27 @@
+---
+title: 'Authentication'
+---
+
+## Overview
+
+All Praxos API requests require authentication using an API key. This document outlines the authentication process and requirements for accessing the Praxos API.
+
+<Card
+  title="Obtaining an API Key"
+  href="/api-key"
+>
+  Learn how to generate and manage your API keys
+</Card>
+
+## Authentication Method
+
+The Praxos API uses API key-based authentication for all endpoints. To authenticate your requests:
+
+1. Include your API key in the request header
+2. Use the header key `api-key`
+3. Ensure the API key is valid and active
+
+Example request header:
+```
+api-key: your-api-key-here
+```
