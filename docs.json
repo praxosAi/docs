@@ -11,6 +11,19 @@
   "navigation": {
     "tabs": [
       {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "quickstart",
+              "api-key",
+              "interface-id"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "API Reference",
         "groups": [
           {
@@ -27,14 +40,6 @@
               "api-reference/endpoint/get-results"
             ]
           }
-        ]
-      },
-      {
-        "tab": "Guides",
-        "pages": [
-          "api-key",
-          "interface-id",
-          "sources"
         ]
       }
     ],
