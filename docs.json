@@ -29,12 +29,19 @@
           {
             "group": "API Documentation",
             "pages": [
-              "api-reference/Authentication"
+              "api-reference/authentication"
             ]
           },
           {
             "group": "Endpoints",
             "pages": [
+              {
+                "group": "Environment",
+                "pages": [
+                  "api-reference/endpoint/environment/post-environment",
+                  "api-reference/endpoint/environment/get-environment"
+                ]
+              },
               "api-reference/endpoint/add-source",
               "api-reference/endpoint/query",
               "api-reference/endpoint/get-results"

@@ -217,6 +217,122 @@
       }
     },
 
+    "/environments": {
+      "post": {
+        "summary": "Create a new environment",
+        "description": "Creates a new environment, the name of the environment is required and must be unique",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the environment"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description of the environment"
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Environment created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Environment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get all environments",
+        "description": "Retrieves environment(s) based on the provided query parameters. if the id or name is provided, the environment with the given id or name will be returned. if no parameters are provided, all environments will be returned as a list of environments.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the environment"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Name of the environment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of environments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Environment"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
 
 
     "/plants": {
@@ -381,6 +497,31 @@
         },
         "required": ["error"]
       },
+
+      "Environment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the environment"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the environment"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the environment"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp of the environment"
+          }
+        },
+        "required": ["id", "name", "created_at"]
+      },
+
 
 
       "AddSourceResponse": {
