@@ -1,32 +1,34 @@
 ---
-title: 'Quickstart'
-description: 'Get started with Praxos API in minutes'
+title: "Quickstart"
+description: "Get started with Praxos API in minutes"
 ---
 
 # Getting Started with Praxos API
 
-This quickstart guide will help you make your first API call to Praxos. You'll learn how to:
-- Set up your development environment
-- Upload a PDF document
+This quickstart guide will help you get up and running using Praxos. You'll learn how to:
+
+- Set up a development environment
+- Upload a document
 - Run a query on your document
 - Retrieve and handle the results
 
 ## Prerequisites
 
-Before you begin, make sure you have:
+To begin, make sure you have:
+
 - A Praxos API key (see [API Key Instructions](/api-key))
 - Python 3.6 or higher installed
-- A PDF document you want to analyze
+- A JSON/PDF/DOC/DOCX file to analyze
 
 ## Setup Your Development Environment
 
-First, install the required Python package:
+First, Python dependencies:
 
 ```bash
 pip install requests
 ```
 
-Then, set up your API key in your Python environment:
+Then, add your API key to the Python environment:
 
 ```python
 import requests
@@ -37,7 +39,7 @@ API_KEY = "YOUR_API_KEY"
 
 ## Upload Your Document
 
-Upload your PDF document to Praxos. The system will automatically handle OCR if needed.
+Upload a JSON/PDF/DOC/DOCX document to Praxos. The system will automatically handle OCR if needed.
 
 ```python
 # API endpoint for uploading documents
@@ -69,6 +71,7 @@ except Exception as e:
 ```
 
 Expected successful response:
+
 ```json
 Successfully uploaded document, Source ID: SOURCE_ID 
 response:
@@ -116,6 +119,7 @@ except Exception as e:
 ```
 
 Expected successful response:
+
 ```json
 Query submitted successfully. Job ID: JOB_ID
 response: {
@@ -163,7 +167,8 @@ except Exception as e:
     print(f"An error occurred: {str(e)}")
 ```
 
-Congratulations! You've successfully:
+Congratulations\! You've successfully:
+
 1. Set up your development environment
 2. Uploaded a document to Praxos
 3. Run a query against your document
