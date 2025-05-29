@@ -48,7 +48,8 @@
                   "api-reference/endpoint/sources/get-source",
                   "api-reference/endpoint/sources/add-source"
                 ]
-              }
+              },
+              "api-reference/endpoint/search"
             ]
           }
         ]
