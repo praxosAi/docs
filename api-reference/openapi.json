@@ -19,204 +19,6 @@
     }
   ],
   "paths": {
-    "/add-source": {
-      "post": {
-        "summary": "Upload a PDF file for processing",
-        "description": "Uploads a PDF file, stores it in praxos, and initiates indexing",
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "PDF file to upload"
-                  }
-                },
-                "required": ["file"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "File successfully uploaded and indexing started",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddSourceResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - invalid file or missing file",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - invalid API key or reached maximum sources",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddSourceErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/query": {
-      "post": {
-        "summary": "Submit query jobs for processing",
-        "description": "Submit one or more query jobs to process sources using specified interfaces. If a request is rejected, niehter of the queries will be processed.",
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QueryRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Query jobs successfully submitted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QuerySuccessResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - invalid request body or IDs (source_ids, interface_id).",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponseWithDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - invalid API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/get-results": {
-      "post": {
-        "summary": "Get results for specified jobs",
-        "description": "Retrieve results for one or more jobs by their IDs",
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GetResultsRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved job results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetResultsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - invalid request body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - invalid API key",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-
     "/environments": {
       "post": {
         "summary": "Create a new environment",
@@ -332,112 +134,214 @@
         }
       }
     },
-
-
-
-    "/plants": {
-      "get": {
-        "description": "Returns all plant from the system that the user has access to",
+    "/sources": {
+      "post": {
+        "summary": "Create a new source",
+        "description": "Create a new source by uploading a file, JSON data, or conversation",
         "parameters": [
           {
-            "name": "limit",
+            "name": "environment_id",
             "in": "query",
-            "description": "The maximum number of results to return",
+            "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
+              "type": "string"
+            },
+            "description": "ID of the environment to create the source in"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["conversation"]
+            },
+            "description": "Type of source to create (only required for conversation type)"
           }
         ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to upload (PDF, DOC, DOCX, or JSON)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the source"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional description of the source"
+                  }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "data": {
+                        "type": "object",
+                        "description": "JSON data to store"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the source"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Optional description of the source"
+                      }
+                    },
+                    "required": ["data"]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "messages": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "role": {
+                              "type": "string",
+                              "description": "Role of the message sender"
+                            },
+                            "content": {
+                              "type": "string",
+                              "description": "Content of the message"
+                            },
+                            "timestamp": {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "Timestamp of the message"
+                            }
+                          },
+                          "required": ["content"]
+                        },
+                        "description": "Array of conversation messages"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the source"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Optional description of the source"
+                      }
+                    },
+                    "required": ["messages"]
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Source created successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
-                  }
+                  "$ref": "#/components/schemas/Source"
                 }
               }
             }
           },
           "400": {
-            "description": "Unexpected error",
+            "description": "Bad request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           }
         }
       },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+      "get": {
+        "summary": "List all sources",
+        "description": "Get source(s) based on the provided query parameters. if the id or name is provided, the source with the given id or name will be returned. if no parameters are provided, all sources will be returned as a list of sources.",
+        "security": [
+          {
+            "ApiKeyAuth": []
           }
-        }
-      }
-    },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+        ],
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
+            "name": "environment_id",
+            "in": "query",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
+              "type": "string"
+            },
+            "description": "ID of the environment to list sources from"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the source"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Name of the source"
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
-          },
-          "400": {
-            "description": "unexpected error",
+          "200": {
+            "description": "Response model could be a list of sources or a single source depending on the query parameters",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Source"
+                }
+              }
+            }
+          },
+
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -480,24 +384,6 @@
         },
         "required": ["error"]
       },
-      "ErrorResponseWithDetails": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error message"
-          },
-          "details": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Detailed error messages"
-          }
-        },
-        "required": ["error"]
-      },
-
       "Environment": {
         "type": "object",
         "properties": {
@@ -521,174 +407,33 @@
         },
         "required": ["id", "name", "created_at"]
       },
-
-
-
-      "AddSourceResponse": {
+      "Source": {
         "type": "object",
         "properties": {
-          "source_id": {
+          "id": {
             "type": "string",
-            "description": "ID of the created source"
-          }
-        },
-        "required": ["source_id"]
-      },
-      "QueryRequest": {
-        "type": "object",
-        "properties": {
-          "queries": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "source_ids": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Array of source IDs to query"
-                },
-                "interface_id": {
-                  "type": "string",
-                  "description": "ID of the interface to use for the query"
-                }
-              },
-              "required": ["source_ids", "interface_id"]
-            }
-          }
-        },
-        "required": ["queries"]
-      },
-
-      "QuerySuccessResponse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "description": "Success message"
+            "description": "Unique identifier of the source"
           },
-          "queries": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "source_ids": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "interface_id": {
-                  "type": "string"
-                },
-                "job_id": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "required": ["message", "queries"]
-      },
-
-      "GetResultsRequest": {
-        "type": "object",
-        "properties": {
-          "job_ids": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Array of job IDs to retrieve results for"
-          }
-        },
-        "required": ["job_ids"]
-      },
-
-      "JobResult": {
-        "type": "object",
-        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the source"
+          },
+          "environment_id": {
+            "type": "string",
+            "description": "ID of the environment this source belongs to"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description of the source"
+          },
           "status": {
             "type": "string",
-            "enum": ["not_found", "initialized", "sources_indexing", "processing", "success"],
-            "description": "Status of the job"
-          },
-          "results": {
-            "type": "object",
-            "description": "Job results (only present when status is 'success'). It will match to the interface schema.",
-            "additionalProperties": true
-          }
-        },
-        "required": ["status"]
-      },
-
-      "GetResultsResponse": {
-        "type": "object",
-        "properties": {
-          "results": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/JobResult"
-            },
-            "description": "Map of job IDs to their results"
-          }
-        },
-        "required": ["results"]
-      },
-
-
-
-
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
-          }
-        ]
-      },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
+            "description": "Current status of the source"
           }
         }
       }

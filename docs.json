@@ -38,13 +38,17 @@
               {
                 "group": "Environment",
                 "pages": [
-                  "api-reference/endpoint/environment/post-environment",
-                  "api-reference/endpoint/environment/get-environment"
+                  "api-reference/endpoint/environment/get-environment",
+                  "api-reference/endpoint/environment/post-environment"
                 ]
               },
-              "api-reference/endpoint/add-source",
-              "api-reference/endpoint/query",
-              "api-reference/endpoint/get-results"
+              {
+                "group": "Sources",
+                "pages": [
+                  "api-reference/endpoint/sources/get-source",
+                  "api-reference/endpoint/sources/add-source"
+                ]
+              }
             ]
           }
         ]
