@@ -1,175 +1,105 @@
 ---
 title: "Quickstart"
-description: "Get started with Praxos API in minutes"
+description: "Get started with Praxos SDK"
 ---
 
-# Getting Started with Praxos API
+# Getting Started with Praxos
 
-This quickstart guide will help you get up and running using Praxos. You'll learn how to:
+This quickstart guide will help you integrate and utilize the Praxos effectively. You'll learn how to:
 
-- Set up a development environment
-- Upload a document
-- Run a query on your document
-- Retrieve and handle the results
+- Configure your development environment
+- Initialize the Praxos client
+- Create and manage environments
+- Add conversations to the knowledge graph
+- Retrieve contextual information
 
 ## Prerequisites
 
-To begin, make sure you have:
+Before you begin, ensure you have:
 
-- A Praxos API key (see [API Key Instructions](/api-key))
+- A valid Praxos API key (see [API Key Instructions](/api-key))
 - Python 3.6 or higher installed
-- A JSON/PDF/DOC/DOCX file to analyze
+- Basic understanding of Python programming
 
-## Setup Your Development Environment
+## Environment Setup
 
-First, Python dependencies:
+1. Install the Praxos Python SDK:
 
 ```bash
-pip install requests
+pip install -U praxos-python
 ```
 
-Then, add your API key to the Python environment:
+2. Configure your API key:
 
 ```python
 import requests
 
-# Replace with your actual API key
+# Replace with your Praxos API key
 API_KEY = "YOUR_API_KEY"
 ```
 
-## Upload Your Document
+## Initialize the Client
 
-Upload a JSON/PDF/DOC/DOCX document to Praxos. The system will automatically handle OCR if needed.
-
-```python
-# API endpoint for uploading documents
-upload_source_url = "https://api.praxos.ai/add-source"
-
-# Path to your PDF file
-pdf_file_path = 'path/to/your/file.pdf'
-
-# Set up headers with your API key
-headers = {
-    "API-key": API_KEY,
-}
-
-try:
-    # Open and upload the file
-    with open(pdf_file_path, 'rb') as f:
-        files = {'file': (pdf_file_path, f, 'application/pdf')}
-        response = requests.post(upload_source_url, headers=headers, files=files)
-        
-        # Check if the request was successful
-        if response.status_code == 200:
-            result = response.json()
-            source_id = result['source_id']
-            print(f"Successfully uploaded document, Source ID: {source_id}.\n response: {result}")
-        else:
-            print(f"Error uploading document: {response.text}")
-except Exception as e:
-    print(f"An error occurred: {str(e)}")
-```
-
-Expected successful response:
-
-```json
-Successfully uploaded document, Source ID: SOURCE_ID 
-response:
-{
-    "source_id": "SOURCE_ID"
-}
-```
-
-## Run a Query
-
-Now that your document is uploaded, you can run queries against it. You'll need your interface ID for this step (see [Interface ID Instructions](/interface-id)).
+Create a Praxos client instance and initialize an environment:
 
 ```python
-# API endpoint for running queries
-query_url = "https://api.praxos.ai/query"
+from praxos_python import SyncClient
 
-# Replace with your actual interface ID
-interface_id = "INTERFACE_ID"
+# Initialize the client with your API key
+client = SyncClient(api_key=API_KEY)
 
-headers = {
-    "API-key": API_KEY,
-}
-
-# Prepare the query payload
-payload = {
-    "queries": [
-        {
-            "source_ids": [source_id],
-            "interface_id": interface_id
-        }
-    ]
-}
-
-try:
-    response = requests.post(query_url, headers=headers, json=payload)
-    
-    if response.status_code == 200:
-        result = response.json()
-        job_id = result['queries'][0]['job_id']
-        print(f"Query submitted successfully. Job ID: {job_id}\nresponse: {result}")
-    else:
-        print(f"Error submitting query: {response.text}")
-except Exception as e:
-    print(f"An error occurred: {str(e)}")
+# Create a new environment
+env = client.create_environment(name="MyEnvironment")
 ```
 
-Expected successful response:
+To learn more about client please review [this page](SDK/client).
 
-```json
-Query submitted successfully. Job ID: JOB_ID
-response: {
-    "message": "Successfully accepted 1 jobs for processing.",
-    "queries": [{
-        "source_ids": ["SOURCE_ID"],
-        "interface_id": "INTERFACE_ID",
-        "job_id": "JOB_ID"
-    }]
-}
-```
+## Add Conversations to Knowledge Graph
 
-## Retrieve Query Results
-
-After submitting a query, you'll need to check the job status and retrieve the results. The processing time may vary depending on the document size and complexity.
+Add LLM conversations to the Praxos knowledge graph:
 
 ```python
-# API endpoint for retrieving results
-get_result_url = "https://api.praxos.ai/get-result"
+from raxos_python.types.message import Message
 
-headers = {
-    "API-key": API_KEY,
-}
+messages = [
+    Message(role="user", content="Hello, I am using Praxos knowledge graph, and it's awesome."),
+    Message(role="assistant", content="Hi there! I'm glad you're exploring Praxos knowledge graph. It's a powerful tool for managing and retrieving contextual information.")
+]
 
-payload = {
-    "job_ids": [job_id]
-}
+source = env.add_conversation(
+    messages=messages,
+    source_name="My Conversation",  # Optional identifier
+    description="A sample conversation"  # Optional description
+)
+```
+To learn more about environment please review [this page](SDK/environment). 
 
-try:
-    response = requests.post(get_result_url, headers=headers, json=payload)
-    
-    if response.status_code == 200:
-        result = response.json()
-        job_response = result['results'][job_id]
-        
-        if job_response['status'] == 'success':
-            print("Query results:")
-            print(job_response['results'])
-        else:
-            print(f"Job status: {job_response['status']}")
-            print("Please wait and try again later.")
-    else:
-        print(f"Error retrieving results: {response.text}")
-except Exception as e:
-    print(f"An error occurred: {str(e)}")
+## Monitor Indexing Status
+
+The knowledge graph requires time to index new sources. Indexing duration varies based on source size. Ensure indexing is complete before querying:
+
+```python
+import time
+
+# Wait for indexing to complete
+while source.get_status() != "success":
+    time.sleep(1)
+```
+More document about source is available [here](SDK/source)
+
+## Retrieve Contextual Information
+
+Query the knowledge graph to retrieve relevant context:
+
+```python
+# Query the knowledge graph
+context = env.get_context("what is the name of knowledge graph tool?")
+print(context.sentence)
 ```
 
-Congratulations\! You've successfully:
+Example output:
+```
+a KnowledgeGraphTool, (which is a Tool), (category: Physical), identified as '67B770787F48A6Eac8C8B578 683A42Bb3983E0Bef0E2D031 683A42Bb3983E0Bef0E2D030 0 Tool Praxoskg', which has attribute ToolName 'Praxos knowledge graph' (base: NameType), and has attribute ToolFunctionalityDescription 'powerful tool for managing and retrieving contextual information' (base: DescriptionType). has attribute ToolName 'Praxos knowledge graph' (base: NameType).
+```
 
-1. Set up your development environment
-2. Uploaded a document to Praxos
-3. Run a query against your document
-4. Retrieved the results
+The retrieved context can be utilized to enhance LLM responses for your specific use case.
