@@ -1,0 +1,81 @@
+---
+title: 'Praxos Python Client'
+description: 'The Praxos Python client provides a synchronous interface for interacting with the Praxos API. This guide will help you get started with the client and show you how to use its main features.'
+---
+
+## Installation
+
+```bash
+pip install -U praxos-python
+```
+
+## Getting Started
+
+To start using the Praxos client, you'll need to initialize it with your [API key](../api-key):
+
+```python
+from praxos_python import SyncClient
+
+client = SyncClient(api_key="your-api-key")
+```
+
+### Configuration Options
+
+The client accepts several configuration options:
+
+- `api_key` (required): Your Praxos API key
+- `base_url` (optional): Custom base URL for the API
+- `params` (optional): Additional query parameters to include in all requests
+- `timeout` (optional): Request timeout in seconds (default: 10.0)
+
+## Environment Management
+
+### Creating an Environment
+
+```python
+# Create a new environment
+environment = client.create_environment(name="my-environment")
+```
+
+### Retrieving Environments
+
+```python
+# Get all environments
+environments = client.get_environments()
+
+# Get a specific environment by ID
+environment = client.get_environment(environment_id="env-123")
+
+# Get a specific environment by name
+environment = client.get_environment(environment_name="my-environment")
+```
+
+## Error Handling
+
+The client includes built-in error handling for common API issues:
+
+- `APIError`: General API errors
+- `APIKeyInvalidError`: Invalid API key errors
+
+Example error handling:
+
+```python
+from praxos_python.exceptions import APIError, APIKeyInvalidError
+
+try:
+    environment = client.create_environment(name="my-environment")
+except APIKeyInvalidError:
+    print("Invalid API key")
+except APIError as e:
+    print(f"API error: {e.message}")
+```
+
+## Resource Management
+
+The client implements Python's context manager protocol, allowing you to use it with the `with` statement:
+
+```python
+with SyncClient(api_key="your-api-key") as client:
+    environment = client.create_environment(name="my-environment")
+    # Client will be automatically closed when exiting the context
+```

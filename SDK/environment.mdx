@@ -1,0 +1,123 @@
+---
+title: Environment
+description: Learn how to work with Environments in the Praxos Python SDK
+---
+
+The Environment class is a core component of the Praxos Python SDK that allows you to manage and interact with your Praxos environments.
+
+An Environment represents a container for your sources and provides methods to interact with them. It's the main entry point for working with your data in Praxos.
+
+## Creating an Environment
+
+```python
+from praxos_python import PraxosClient
+
+with PraxosClient(api_key="your-api-key") as client:
+    environment = client.create_environment(name="environment name")
+```
+For more detail see [Client doc](/client).
+
+## Obtain an Environment
+
+```python
+from praxos_python import PraxosClient
+
+with PraxosClient(api_key="your-api-key") as client:
+    environment = client.get_environment(environment_id="your-environment-id")
+```
+For more detail see [Client doc](/client).
+
+## Methods
+
+### Get Context
+
+Retrieve relevant context for an LLM based on a query.
+
+```python
+context = environment.get_context(
+    query="What is the main topic?",
+    top_k=1  # Optional: number of context items to return
+)
+```
+
+### Add Sources
+
+#### Add a Conversation
+
+Add a conversation source to your environment.
+
+```python
+from praxos_python.types.message import Message
+
+messages = [
+    Message(role="user", content="Hello"),
+    Message(role="assistant", content="Hi there!")
+]
+
+source = environment.add_conversation(
+    messages=messages,
+    source_name="My Conversation",  # Optional
+    description="A sample conversation"  # Optional
+)
+```
+
+#### Add a File
+
+Add a file source to your environment. Supported file types include PDF and JSON.
+
+```python
+source = environment.add_file(
+    file_path="path/to/your/file.pdf",
+    name="My Document",  # Optional
+    description="A sample document"  # Optional
+)
+```
+
+#### Add Business Data
+
+Add structured business data to your environment.
+
+```python
+data = {
+    "key": "value",
+    "nested": {
+        "field": "data"
+    }
+}
+
+source = environment.add_business_data(
+    data=data,
+    name="My Business Data",  # Optional
+    description="Sample business data"  # Optional
+)
+```
+
+### Retrieve Sources
+
+#### Get All Sources
+
+Retrieve all sources in your environment.
+
+```python
+sources = environment.get_sources()
+```
+
+#### Get a Specific Source
+
+Retrieve a specific source by ID or name.
+
+```python
+# By ID
+source = environment.get_source(source_id="your-source-id")
+
+# By name
+source = environment.get_source(source_name="My Source")
+```
+
+## Error Handling
+
+The SDK includes built-in error handling for common scenarios:
+
+- `FileNotFoundError`: Raised when attempting to add a non-existent file
+- `ValueError`: Raised for invalid file extensions or missing required parameters
+- `APIError`: Raised for API-related errors

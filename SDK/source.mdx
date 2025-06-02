@@ -1,0 +1,52 @@
+---
+title: 'Source'
+description: 'single source of knowledge'
+---
+
+
+# Source
+
+The Source model represents a data source in the Praxos platform. It provides functionality to interact with and manage data sources.
+
+## Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier for the source |
+| name | string | Name of the source |
+| created_at | string | Timestamp when the source was created |
+| environment_id | string | ID of the environment this source belongs to |
+| description | string | Description of the source |
+
+## SyncSource
+
+The `SyncSource` class represents a synchronous source resource.
+
+## Methods
+
+### get_status()
+
+Retrieves the current status of the source.
+
+```python
+source = SyncSource(...)
+status = source.get_status()
+```
+
+**Returns:**
+- `string`: A string as a single word reperesending the current status of source.
+
+#### Example Usage
+
+```python
+# Initialize a sync source
+source = environment.get_source(source_id="source id")
+
+# Get source status
+status = source.get_status()
+```
+
+## Related Resources
+
+- [Environment](/environment)
+- [Client](/docs/client) 
