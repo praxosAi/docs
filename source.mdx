@@ -1,0 +1,36 @@
+---
+title: Source
+---
+
+## Overview
+A Source represents a single data point that contributes to building a knowledge graph. It is the atomic unit of input that you can add to the knowledge graph. Every source must belong to an environment, and each environment maintains its own isolated collection of sources.
+
+## Source Types
+
+Sources come in three categories based on the nature of the data:
+
+1. **Conversation:** Represents dialog-like exchanges—typically between a user and an LLM. These are useful for capturing context, intent, and evolving memory over time.
+2. **JSON:** Structured business data in JSON format. Ideal for importing records, objects, or structured facts that the AI agent can query or connect in the knowledge graph.
+3. **File:** Uploaded files, currently supporting PDF and JSON files
+
+Each source type is processed and interpreted to extract entities and relationships that populate the underlying knowledge graph.
+
+
+## Structure
+
+| Field         | Type   | Description                                                  |
+| ------------- | ------ | ------------------------------------------------------------ |
+| `name`        | string | A unique name within the environment (required)              |
+| `description` | string | Optional field describing the content or purpose of the data |
+| `type`        | enum   | One of: `conversation`, `json`, or `file`                    |
+| `environment` | string | ID or name of the environment this source belongs to         |
+
+<Warning>
+**Source names must be unique within the same environment.** Two sources in the same environment cannot share the same name.
+</Warning>
+
+
+- [Source api](/api-reference/endpoint/sources/get-source)
+- [SDK doc](/SDK/source)
+
+

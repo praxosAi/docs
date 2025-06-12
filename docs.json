@@ -18,7 +18,8 @@
             "pages": [
               "quickstart",
               "api-key",
-              "environment"
+              "environment",
+              "source"
             ]
           }
         ]
