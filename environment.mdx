@@ -1,0 +1,37 @@
+---
+title: 'Environment'
+---
+
+## Overview
+In our knowledge graph service, an Environment acts as a logical container that isolates sources within a user's workspace. This allows users to create and manage multiple knowledge graphs independently under the same account.
+
+## Why Use Environments?
+AI agents often interact with diverse and unrelated sets of information. Environments provide a clean way to separate these contexts, ensuring that data from one use case or project does not interfere with another. This is especially useful when:
+- Building independent knowledge graphs for different agents or domains
+- Running isolated queries and evaluations
+- Managing context-specific memory for AI workflows
+
+## Key Characteristics
+- Isolation: Sources stored in one environment are not accessible from another. This guarantees clean separation of information.
+- Scoped Queries: All graph operations and queries are performed within the context of a specific environment.
+- Flexibility: Users can create as many environments as needed, allowing for fine-grained control over their memory architecture.
+
+## Structure
+Each environment has the following properties:
+
+| Field         | Type   | Description                                       |
+| ------------- | ------ | ------------------------------------------------- |
+| `name`        | string | Unique name of the environment (required)         |
+| `description` | string | Optional description providing context or purpose |
+
+<Warning>
+Environment names must be unique across all of a user's environments. Attempting to create another environment with the same name will result in an error.
+</Warning>
+
+## Relationship with Sources
+Every source must be associated with exactly one environment. This ensures that all knowledge derived from a source is scoped correctly and remains isolated within its intended graph.
+
+- [Environment api](/api-reference/endpoint/environment)
+- [SDK doc](/SDK/environment)
+
+
