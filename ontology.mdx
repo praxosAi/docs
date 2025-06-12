@@ -1,0 +1,45 @@
+---
+title: Ontology
+---
+
+## Overview
+An Ontology defines a structured schema for understanding data. It allows you to introduce predefined types, attributes, and relationships that guide how the knowledge graph is built and interpreted.
+
+By using ontologies, Praxos can capture and organize data more accurately, leveraging domain-specific structure rather than relying solely on implicit patterns in a source.
+
+## Why Use Ontologies?
+
+Ontologies provide a way to shape how data is interpreted by:
+
+- Defining entities, attributes, and relationships ahead of time
+- Enabling consistent and predictable graph structures
+- Improving extraction accuracy by using user-defined expectations
+- Supporting richer and more reliable querying
+
+They are especially useful when dealing with structured business data or well-known domains such as finance, healthcare, or customer service.
+
+## Scope and Behavior
+
+- Ontologies are applied at the environment level.
+- Each environment can support multiple ontologies.
+- When an ontology is applied to an environment, it automatically influences how all sources within that environment are processed.
+- This means that entity recognition, relationship extraction, and graph construction are all guided by the ontology's definitions.
+
+## Structure
+
+| Field         | Type   | Description                                       |
+| ------------- | ------ | ------------------------------------------------- |
+| `name`        | string | Unique name of the ontology (required)            |
+| `description` | string | Optional description providing context or purpose |
+
+
+<Warning>
+**Ontology names must be unique across all of ontologies.** Attempting to create another ontology with the same name will result in an error.
+</Warning>
+
+## Summary
+- Ontologies act as blueprints for structured knowledge.
+- They enhance accuracy and control over how the knowledge graph is built.
+- Applied at the environment level, they affect all sources in that environment.
+- Multiple ontologies can coexist within a single environment, enabling modular and flexible schema design.
+
