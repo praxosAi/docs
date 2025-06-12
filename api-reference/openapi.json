@@ -19,7 +19,7 @@
     }
   ],
   "paths": {
-    "/environments": {
+    "/environment": {
       "post": {
         "summary": "Create a new environment",
         "description": "Creates a new environment, the name of the environment is required and must be unique",

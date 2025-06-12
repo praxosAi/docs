@@ -54,7 +54,7 @@
                 ]
               },
               {
-                "group": "Sources",
+                "group": "Source",
                 "pages": [
                   "api-reference/endpoint/sources/get-source",
                   "api-reference/endpoint/sources/add-source"
