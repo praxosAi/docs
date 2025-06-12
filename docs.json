@@ -17,7 +17,8 @@
             "group": "Get Started",
             "pages": [
               "quickstart",
-              "api-key"
+              "api-key",
+              "environment"
             ]
           }
         ]
@@ -25,9 +26,9 @@
       {
         "tab": "SDK",
         "pages": [
-          "sdk/client",
-          "sdk/environment",
-          "sdk/source"
+          "SDK/client",
+          "SDK/environment",
+          "SDK/source"
         ]
       },
       {
