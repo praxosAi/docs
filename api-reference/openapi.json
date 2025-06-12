@@ -349,6 +349,155 @@
         }
       }
     },
+    "/ontology": {
+      "post": {
+        "summary": "Create a new ontology",
+        "description": "Create a new ontology",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { 
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the ontology"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description of the ontology"
+                  },
+                  "schemas": {
+                    "type": "object",
+                    "description": "JSON Schema for the ontology"
+                  }
+                },
+                "required": ["name", "schemas"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ontology created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ontology"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List all Ontologies",
+        "description": "Get ontology(s) based on the provided query parameters. if the id or name is provided, the ontology with the given id or name will be returned. if no parameters are provided, all ontologies will be returned as a list of ontologies.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the ontology"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Name of the ontology"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of ontologies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ontology"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/search": {
       "post": {
         "summary": "Search through graph data",
@@ -555,6 +704,24 @@
           }
         },
         "required": ["id", "name", "created_at"]
+      },
+      "Ontology": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the ontology"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the ontology"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the ontology"
+          }
+        },
+        "required": ["id", "name"]  
       },
       "Source": {
         "type": "object",

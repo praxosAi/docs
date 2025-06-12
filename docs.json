@@ -59,6 +59,13 @@
                   "api-reference/endpoint/sources/get-source",
                   "api-reference/endpoint/sources/add-source"
                 ]
+              },
+              {
+                "group": "Ontology",
+                "pages": [
+                  "api-reference/endpoint/ontology/get",
+                  "api-reference/endpoint/ontology/create"
+                ]
               }
             ]
           }
