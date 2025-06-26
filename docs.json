@@ -50,8 +50,7 @@
                 "group": "Environment",
                 "pages": [
                   "api-reference/endpoint/environment/get-environment",
-                  "api-reference/endpoint/environment/post-environment",
-                  "api-reference/endpoint/search"
+                  "api-reference/endpoint/environment/post-environment"
                 ]
               },
               {
@@ -67,7 +66,9 @@
                   "api-reference/endpoint/ontology/get",
                   "api-reference/endpoint/ontology/create"
                 ]
-              }
+              },
+              "api-reference/endpoint/search",
+              "api-reference/endpoint/extract items"
             ]
           }
         ]

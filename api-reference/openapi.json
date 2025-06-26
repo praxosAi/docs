@@ -498,6 +498,100 @@
         }
       }
     },
+    "/extract": {
+      "post": {
+        "summary": "Extract list of items from an environment",
+        "description": "Extract list of items from an environment",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { 
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "environment_id": {
+                    "type": "string",
+                    "description": "ID of the environment to extract items from",
+                    "required": true
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Label of the items to extract, it should be the same as it appears in the ontology",
+                    "required": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "List of items extracted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID of the item"
+                          },
+                          "data": {
+                            "type": "object",
+                            "description": "Data of the item"                            
+                          }
+                        },
+                        "required": ["id", "data"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/search": {
       "post": {
         "summary": "Search through graph data",
