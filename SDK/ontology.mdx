@@ -1,8 +1,13 @@
 ---
-title: 'Ontology'
+title: 'Ontology Management'
+description: 'Learn how to create and manage ontologies in Praxos using Pydantic schemas for structured data processing.'
 ---
 
-## Properties
+## Overview
+
+Ontologies in Praxos define the structure and types of entities that your system can recognize and extract from data sources. They use Pydantic models to create type-safe schemas that guide entity extraction, validation, and relationship mapping.
+
+## SyncOntology Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -10,4 +15,196 @@ title: 'Ontology'
 | name | string | Name of the ontology |
 | description | string | Description of the ontology |
 
-- [Environment](/environment)
+## Creating Ontologies
+
+### Basic Ontology Creation
+
+```python
+from praxos_python import SyncClient
+from pydantic import BaseModel, Field
+from typing import Optional
+
+client = SyncClient(api_key="your-api-key")
+
+# Define your entity schemas
+class Person(BaseModel):
+    name: str = Field(description="Full name of the person")
+    age: Optional[int] = Field(description="Age in years")
+    email: Optional[str] = Field(description="Email address")
+
+class Company(BaseModel):
+    name: str = Field(description="Company name")
+    industry: Optional[str] = Field(description="Industry sector")
+    founded: Optional[int] = Field(description="Year founded")
+
+# Create the ontology
+ontology = client.create_ontology(
+    name="business-entities",
+    description="Core business entity definitions",
+    schemas=[Person, Company]
+)
+
+print(f"Created ontology: {ontology.id}")
+```
+
+### Advanced Schema Definitions
+
+```python
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List
+from datetime import datetime
+
+class Contact(BaseModel):
+    name: str = Field(description="Contact name")
+    phone: Optional[str] = Field(description="Phone number")
+    email: Optional[str] = Field(description="Email address")
+    
+    @validator('email')
+    def validate_email(cls, v):
+        if v and '@' not in v:
+            raise ValueError('Invalid email format')
+        return v
+
+class Project(BaseModel):
+    title: str = Field(description="Project title")
+    status: str = Field(description="Project status", default="active")
+    budget: Optional[float] = Field(description="Project budget in USD")
+    team_size: Optional[int] = Field(description="Number of team members")
+    tags: Optional[List[str]] = Field(description="Project tags")
+
+class Meeting(BaseModel):
+    title: str = Field(description="Meeting title")
+    participants: Optional[List[str]] = Field(description="List of participant names")
+    duration_minutes: Optional[int] = Field(description="Meeting duration in minutes")
+    action_items: Optional[List[str]] = Field(description="List of action items")
+
+# Create a comprehensive project management ontology
+project_ontology = client.create_ontology(
+    name="project-management",
+    description="Ontology for project management entities",
+    schemas=[Contact, Project, Meeting]
+)
+```
+
+## Retrieving Ontologies
+
+### Get All Ontologies
+
+```python
+# List all ontologies in your account
+ontologies = client.get_ontologies()
+
+for ontology in ontologies:
+    print(f"Ontology: {ontology.name} (ID: {ontology.id})")
+    print(f"Description: {ontology.description}")
+```
+
+### Get Specific Ontology
+
+```python
+# Retrieve by ID
+ontology = client.get_ontology(id="onto-123abc")
+
+# Retrieve by name
+ontology = client.get_ontology(name="business-entities")
+
+print(f"Found ontology: {ontology.name}")
+```
+
+## Using Ontologies with Environments
+
+### Associating Ontologies with Environments
+
+```python
+# Create an environment with specific ontologies
+environment = client.create_environment(
+    name="customer-analysis",
+    description="Environment for analyzing customer data",
+    ontologies=[ontology]  # Can pass SyncOntology objects or ID strings
+)
+
+# Or use ontology IDs directly
+environment = client.create_environment(
+    name="customer-analysis",
+    ontologies=["onto-123abc", "onto-456def"]
+)
+```
+
+## Best Practices
+
+### Schema Design Guidelines
+
+1. **Use Descriptive Field Names**: Choose clear, unambiguous field names
+2. **Add Comprehensive Descriptions**: Field descriptions guide entity extraction
+3. **Use Optional Fields Wisely**: Mark fields as Optional when they may not always be present
+4. **Validate Critical Fields**: Use Pydantic validators for important data constraints
+
+```python
+class Customer(BaseModel):
+    # Good: Clear, descriptive name
+    full_name: str = Field(description="Customer's complete legal name")
+    
+    # Good: Optional with clear description
+    annual_revenue: Optional[float] = Field(
+        description="Annual revenue in USD, if available"
+    )
+    
+    # Good: Constrained field with validation
+    customer_tier: str = Field(
+        description="Customer tier: bronze, silver, gold, or platinum",
+        default="bronze"
+    )
+    
+    @validator('customer_tier')
+    def validate_tier(cls, v):
+        allowed_tiers = ['bronze', 'silver', 'gold', 'platinum']
+        if v.lower() not in allowed_tiers:
+            raise ValueError(f'Tier must be one of: {", ".join(allowed_tiers)}')
+        return v.lower()
+```
+
+### Ontology Organization
+
+1. **Keep Related Entities Together**: Group logically related schemas in the same ontology
+2. **Use Meaningful Names**: Choose ontology names that clearly indicate their purpose
+3. **Document Your Ontologies**: Provide detailed descriptions explaining the ontology's scope
+
+```python
+# Good: Focused, well-organized ontology
+financial_ontology = client.create_ontology(
+    name="financial-entities",
+    description="Core financial entities for accounting and reporting",
+    schemas=[Transaction, Account, Invoice, Payment]
+)
+
+# Good: Clear separation of concerns
+hr_ontology = client.create_ontology(
+    name="human-resources",
+    description="Employee and organizational structure entities",
+    schemas=[Employee, Department, Position, Benefit]
+)
+```
+
+## Error Handling
+
+```python
+from praxos_python.exceptions import APIError, APIKeyInvalidError
+
+try:
+    ontology = client.create_ontology(
+        name="test-ontology",
+        schemas=[Person, Company]
+    )
+except APIKeyInvalidError:
+    print("Invalid API key provided")
+except APIError as e:
+    print(f"Failed to create ontology: {e.message}")
+except ValueError as e:
+    print(f"Invalid schema definition: {e}")
+```
+
+## Related Documentation
+
+- [Client](/SDK/client) - Learn about the SyncClient and basic setup
+- [Environment](/SDK/environment) - Understand how ontologies work with environments
+- [Source](/SDK/source) - See how ontologies guide data processing

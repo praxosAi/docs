@@ -35,6 +35,13 @@ The client accepts several configuration options:
 ```python
 # Create a new environment
 environment = client.create_environment(name="my-environment")
+
+# Create an environment with description and ontologies
+environment = client.create_environment(
+    name="my-environment",
+    description="Environment for processing customer data",
+    ontologies=["customer-ontology-id"]  # List of ontology IDs or SyncOntology objects
+)
 ```
 
 ### Retrieving Environments
@@ -44,10 +51,52 @@ environment = client.create_environment(name="my-environment")
 environments = client.get_environments()
 
 # Get a specific environment by ID
-environment = client.get_environment(environment_id="env-123")
+environment = client.get_environment(id="env-123")
 
 # Get a specific environment by name
-environment = client.get_environment(environment_name="my-environment")
+environment = client.get_environment(name="my-environment")
+```
+
+## Ontology Management
+
+Ontologies define the structure and types of data that your environment can process. They use Pydantic models to define schemas for entity extraction and validation.
+
+### Creating an Ontology
+
+```python
+from pydantic import BaseModel, Field
+from typing import Optional
+
+# Define your data schemas using Pydantic models
+class Person(BaseModel):
+    name: str = Field(description="Full name of the person")
+    age: Optional[int] = Field(description="Age in years")
+    email: Optional[str] = Field(description="Email address")
+
+class Organization(BaseModel):
+    name: str = Field(description="Organization name")
+    industry: Optional[str] = Field(description="Industry sector")
+    employees: Optional[int] = Field(description="Number of employees")
+
+# Create an ontology with multiple schemas
+ontology = client.create_ontology(
+    name="business-ontology",
+    description="Ontology for business entities",
+    schemas=[Person, Organization]
+)
+```
+
+### Retrieving Ontologies
+
+```python
+# Get all ontologies
+ontologies = client.get_ontologies()
+
+# Get a specific ontology by ID
+ontology = client.get_ontology(id="onto-123")
+
+# Get a specific ontology by name
+ontology = client.get_ontology(name="business-ontology")
 ```
 
 ## Error Handling
@@ -68,6 +117,26 @@ except APIKeyInvalidError:
     print("Invalid API key")
 except APIError as e:
     print(f"API error: {e.message}")
+```
+
+## Additional Imports
+
+The SDK provides several model classes and utilities that you can import:
+
+```python
+from praxos_python import (
+    SyncClient,
+    SyncEnvironment, 
+    SyncSource,
+    SyncOntology,
+    APIError
+)
+
+# For message handling in conversations
+from praxos_python.types import Message
+
+# For search result handling
+from praxos_python.models import Context
 ```
 
 ## Resource Management

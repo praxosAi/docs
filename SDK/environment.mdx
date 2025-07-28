@@ -1,95 +1,583 @@
 ---
 title: Environment
-description: Learn how to work with Environments in the Praxos Python SDK
+description: Learn how to work with Environments in the Praxos Python SDK, including advanced search capabilities and data management
 ---
 
 The Environment class is a core component of the Praxos Python SDK that allows you to manage and interact with your Praxos environments.
 
-An Environment represents a container for your sources and provides methods to interact with them. It's the main entry point for working with your data in Praxos.
+An Environment represents a container for your sources and provides methods to interact with them. It's the main entry point for working with your data in Praxos, offering powerful search capabilities across multiple modalities.
 
 ## Creating an Environment
 
 ```python
-from praxos_python import PraxosClient
+from praxos_python import SyncClient
 
-with PraxosClient(api_key="your-api-key") as client:
-    environment = client.create_environment(name="environment name")
+client = SyncClient(api_key="your-api-key")
+environment = client.create_environment(name="my-environment")
 ```
-For more detail see [Client doc](/client).
+For more detail see [Client doc](/SDK/client).
 
-## Obtain an Environment
+## Obtaining an Environment
 
 ```python
-from praxos_python import PraxosClient
+from praxos_python import SyncClient
 
-with PraxosClient(api_key="your-api-key") as client:
-    environment = client.get_environment(environment_id="your-environment-id")
+client = SyncClient(api_key="your-api-key")
+
+# By ID
+environment = client.get_environment(id="your-environment-id")
+
+# By name
+environment = client.get_environment(name="my-environment")
 ```
-For more detail see [Client doc](/client).
+For more detail see [Client doc](/SDK/client).
 
-## Methods
+## Search Methods
 
-### Get Context
+Praxos offers multiple search modalities optimized for different use cases, from fast vector search to complex graph traversal.
 
-Retrieve relevant context for an LLM based on a query.
+### Basic Search
+
+The unified search method provides access to all search modalities with extensive filtering options.
 
 ```python
-context = environment.get_context(
-    query="What is the main topic?",
-    top_k=1  # Optional: number of context items to return
+# Basic search with default settings (fast modality)
+results = environment.search(
+    query="Find information about customer complaints",
+    top_k=10
+)
+
+for result in results:
+    print(f"Score: {result['score']}")
+    print(f"Content: {result['data']}")
+```
+
+### Search Modalities
+
+#### Fast Search (Qdrant)
+Optimized for speed with basic filtering. Best for quick lookups and simple queries.
+
+```python
+# Using the dedicated fast search method
+results = environment.search_fast(
+    query="customer service issues",
+    top_k=5,
+    node_type="schema:Person",  # Filter by node type
+    has_sentence=True  # Only nodes with generated sentences
+)
+
+# Using the general search method
+results = environment.search(
+    query="customer service issues",
+    search_modality="fast",
+    top_k=5
 )
 ```
 
-### Add Sources
-
-#### Add a Conversation
-
-Add a conversation source to your environment.
+#### Graph Search (Neo4j)
+Advanced graph-aware search with relationship traversal. Best for complex queries requiring graph context.
 
 ```python
-from praxos_python.types.message import Message
+# Using the dedicated graph search method
+results = environment.search_graph(
+    query="companies connected to John Smith",
+    top_k=10,
+    include_graph_context=True  # Include relationship information
+)
 
+# Using the general search method
+results = environment.search(
+    query="companies connected to John Smith",
+    search_modality="node_vec",
+    include_graph_context=True,
+    top_k=10
+)
+```
+
+#### Type-Aware Search
+Uses AI to automatically infer entity types and relationships from natural language queries.
+
+```python
+results = environment.search_with_types(
+    query="Find all meetings between executives and external partners",
+    top_k=15
+)
+
+# This automatically infers:
+# - Source type: executives (internal entities)
+# - Target type: partners (external entities)  
+# - Relationship type: meetings
+```
+
+#### Edge-Based Search (Legacy)
+Traditional edge-based search with explicit relationship filtering.
+
+```python
+results = environment.search(
+    query="collaboration patterns",
+    search_modality="vec_edge",
+    source_type="schema:Person",
+    target_type="schema:Organization",
+    relationship_type="WORKS_AT",
+    top_k=10
+)
+```
+
+### Specialized Search Methods
+
+#### Entity Search
+Focus on entities with generated sentences and comprehensive context.
+
+```python
+# Search all entities
+results = environment.search_entities(
+    query="senior executives in technology companies",
+    top_k=10,
+    include_temporal=True
+)
+
+# Search specific entity types
+results = environment.search_entities(
+    query="experienced software engineers",
+    entity_types=["schema:Person", "EmployeeProfile"],
+    top_k=15
+)
+```
+
+#### Temporal Search
+Filter results by time periods using TimePoint nodes.
+
+```python
+results = environment.search_temporal(
+    query="quarterly earnings reports",
+    timepoint_type="Quarter",
+    time_period="2023-Q4",
+    top_k=10
+)
+
+results = environment.search_temporal(
+    query="monthly sales data",
+    timepoint_type="Month", 
+    time_period="January",
+    top_k=20
+)
+```
+
+#### Sentence Search
+Search within generated sentences across different node types.
+
+```python
+# Search in all sentence types
+results = environment.search_sentences(
+    query="budget allocation decisions",
+    top_k=10
+)
+
+# Search specific sentence types
+results = environment.search_sentences(
+    query="project milestone updates",
+    sentence_types=["entity", "edge_sentence"],
+    top_k=15
+)
+```
+
+### Anchor-Based Search
+
+Search within k-hops of specific anchor points for localized exploration.
+
+#### Search from Anchors
+```python
+# Define anchor points
+anchors = [
+    {"id": "node-123"},  # Specific node ID
+    {"value": "john@company.com", "type": "EmailType"},  # By value and type
+    {"label": "John Smith", "type": "schema:Person"}  # By label and type
+]
+
+results = environment.search_from_anchors(
+    anchors=anchors,
+    query="related projects and collaborators",
+    max_hops=2,  # Search within 2 graph hops
+    top_k=20
+)
+```
+
+#### Search from Element
+```python
+# Search entities connected to a specific element
+results = environment.search_from_element(
+    element_id="person-456",
+    query="professional connections",
+    max_hops=3,
+    top_k=15
+)
+```
+
+#### Search from Phone/Email
+```python
+# Search entities connected to a phone number
+results = environment.search_from_phone(
+    phone="+1-555-0123",
+    query="associated contacts and accounts",
+    max_hops=2
+)
+
+# Search entities connected to an email
+results = environment.search_from_email(
+    email="contact@company.com", 
+    query="related business entities",
+    max_hops=2
+)
+```
+
+### Advanced Filtering
+
+#### Node-Based Filters
+```python
+results = environment.search(
+    query="customer feedback analysis",
+    search_modality="node_vec",
+    node_type="schema:Review",  # Filter by node type
+    node_kind="entity",  # Filter by node kind: entity, literal, edge_sentence
+    node_label="CustomerReview",  # Filter by node label
+    has_sentence=True,  # Only nodes with generated sentences
+    top_k=10
+)
+```
+
+#### Temporal Filters
+```python
+temporal_filter = {
+    "timepoint_type": "Quarter",
+    "time_period": "2023-Q3"
+}
+
+results = environment.search(
+    query="performance metrics",
+    temporal_filter=temporal_filter,
+    top_k=10
+)
+```
+
+#### Source Filters
+```python
+results = environment.search(
+    query="customer complaints",
+    source_id="source-789",  # Limit to specific source
+    top_k=10
+)
+```
+
+### Legacy Context Method
+
+Simple context retrieval for LLM applications (uses vec_edge search).
+
+```python
+from praxos_python.models import Context
+
+# Get single context item
+context = environment.get_context(
+    query="What is the main topic?",
+    top_k=1
+)
+print(f"Context: {context.sentence}")
+print(f"Score: {context.score}")
+
+# Get multiple context items  
+contexts = environment.get_context(
+    query="What are the key themes?",
+    top_k=5
+)
+for context in contexts:
+    print(f"Score: {context.score}, Content: {context.sentence}")
+```
+
+## Data Extraction Methods
+
+Extract structured data from your processed sources using your ontology schemas.
+
+### Extract Entities
+
+Extract entities based on schema definitions from your ontologies.
+
+```python
+# Extract all Person entities
+people = environment.extract_items(
+    schema="Person",  # Schema name or Pydantic class
+    top_k=50
+)
+
+# Extract from specific source
+customers = environment.extract_items(
+    schema="Customer", 
+    source_id="source-123",
+    top_k=100
+)
+
+# Extract from specific page/section
+reviews = environment.extract_items(
+    schema="Review",
+    source_id="source-456",
+    page_idx="page-1",
+    top_k=25
+)
+
+for item in people:
+    print(f"Entity: {item}")
+```
+
+### Extract Literals
+
+Extract literal values (emails, phone numbers, etc.) with different output modes.
+
+```python
+# Extract just the literal values
+emails = environment.extract_literals(
+    literal_type="EmailType",
+    mode="literals_only",
+    top_k=100
+)
+
+print(f"Found {len(emails['items'])} email addresses")
+for email in emails['items']:
+    print(f"Email: {email['value']}")
+
+# Extract full entities containing the literals
+people_with_emails = environment.extract_literals(
+    literal_type="EmailType", 
+    mode="full_entities",
+    source_id="source-789",
+    top_k=50
+)
+
+for person in people_with_emails['items']:
+    print(f"Person: {person['entity']}")
+    print(f"Email: {person['literal']['value']}")
+```
+
+### Common Literal Types
+
+```python
+# Extract phone numbers
+phones = environment.extract_literals("PhoneNumberType", mode="literals_only")
+
+# Extract URLs  
+urls = environment.extract_literals("URLType", mode="literals_only")
+
+# Extract addresses
+addresses = environment.extract_literals("AddressType", mode="full_entities")
+
+# Extract dates
+dates = environment.extract_literals("DateType", mode="literals_only")
+```
+
+## Graph Data Methods
+
+### Fetch Graph Nodes
+
+Retrieve nodes directly from the Neo4j graph by their IDs.
+
+```python
+# Fetch specific nodes by ID
+node_ids = ["node-123", "node-456", "node-789"]
+nodes = environment.fetch_graph_nodes(node_ids)
+
+for node in nodes:
+    print(f"Node ID: {node['id']}")
+    print(f"Labels: {node['labels']}")
+    print(f"Properties: {node['properties']}")
+    if 'literals' in node:
+        print(f"Connected literals: {len(node['literals'])}")
+```
+
+### Working with Graph Results
+
+```python
+# Get node IDs from search results
+search_results = environment.search_graph(
+    query="senior management team",
+    top_k=10
+)
+
+# Extract node IDs for detailed graph fetching
+node_ids = [result['data'].get('node_id') for result in search_results 
+           if result['data'].get('node_id')]
+
+# Fetch full graph context
+detailed_nodes = environment.fetch_graph_nodes(node_ids)
+
+# Analyze the graph structure
+for node in detailed_nodes:
+    print(f"\nNode: {node['id']}")
+    print(f"Type: {node.get('type', 'Unknown')}")
+    
+    # Show connected literals
+    if 'literals' in node:
+        for literal in node['literals']:
+            print(f"  - {literal['type']}: {literal['value']}")
+```
+
+## Source Management
+
+Add different types of data sources to your environment for processing and analysis.
+
+### Add a Conversation
+
+Add chat conversations or message exchanges to your environment.
+
+```python
+from praxos_python.types import Message
+
+# Create messages using the Message class
 messages = [
-    Message(role="user", content="Hello"),
-    Message(role="assistant", content="Hi there!")
+    Message(role="user", content="What are our Q4 sales targets?"),
+    Message(role="assistant", content="Q4 targets are $2.5M with focus on enterprise clients."),
+    Message(role="user", content="What about our current pipeline?")
+]
+
+# Or use dictionaries
+messages = [
+    {"role": "user", "content": "Hello"},
+    {"role": "assistant", "content": "Hi there!"},
+    {"role": "user", "content": "Can you help me with analysis?"}
 ]
 
 source = environment.add_conversation(
     messages=messages,
-    source_name="My Conversation",  # Optional
-    description="A sample conversation"  # Optional
+    name="Sales Meeting Discussion",  # Optional
+    description="Q4 planning conversation"  # Optional
 )
+
+print(f"Added conversation source: {source.id}")
 ```
 
-#### Add a File
+### Add a File
 
-Add a file source to your environment. Supported file types include PDF and JSON.
+Add files to your environment. Supported formats include PDF and JSON.
 
 ```python
+# Add a PDF document
 source = environment.add_file(
-    file_path="path/to/your/file.pdf",
-    name="My Document",  # Optional
-    description="A sample document"  # Optional
+    path="documents/quarterly_report.pdf",
+    name="Q4 Financial Report",  # Optional, defaults to filename
+    description="Quarterly financial analysis"  # Optional
 )
+
+# Add a JSON file
+source = environment.add_file(
+    path="data/customer_data.json", 
+    name="Customer Database",
+    description="Customer records and transactions"
+)
+
+print(f"Added file source: {source.id}")
 ```
 
-#### Add Business Data
+#### Supported File Types
 
-Add structured business data to your environment.
+- **PDF**: `.pdf` files for document processing
+- **JSON**: `.json` files for structured data
+
+### Add Business Data
+
+Add structured JSON data directly without file upload.
 
 ```python
+# Simple business data
 data = {
-    "key": "value",
-    "nested": {
-        "field": "data"
-    }
+    "customers": [
+        {"name": "John Doe", "email": "john@example.com", "tier": "premium"},
+        {"name": "Jane Smith", "email": "jane@example.com", "tier": "basic"}
+    ],
+    "revenue": {"q4_2023": 2500000, "q3_2023": 2200000}
 }
 
 source = environment.add_business_data(
     data=data,
-    name="My Business Data",  # Optional
-    description="Sample business data"  # Optional
+    name="Customer Revenue Data",
+    description="Q4 customer and revenue information"
 )
+
+# Advanced business data with processing options
+advanced_data = {
+    "employees": [
+        {"id": 1, "name": "Alice Johnson", "department": "Engineering", "salary": 120000},
+        {"id": 2, "name": "Bob Wilson", "department": "Sales", "salary": 95000}
+    ]
+}
+
+source = environment.add_business_data(
+    data=advanced_data,
+    name="Employee Directory",
+    description="Current employee information",
+    root_entity_type="schema:Organization",  # Specify root entity type
+    metadata={"source": "HR_system", "version": "2.1"},  # Additional metadata
+    processing_config={"generate_sentences": True, "extract_relations": True}
+)
+```
+
+### Add NetworkX Graph
+
+<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 12px; margin: 16px 0;">
+<strong>⚠️ Dependency Required:</strong> This feature requires NetworkX. Install with: <code>pip install networkx</code>
+</div>
+
+Add NetworkX graphs directly for graph-based data processing.
+
+```python
+import networkx as nx
+
+# Create a simple organizational graph
+G = nx.MultiDiGraph()
+
+# Add nodes with properties
+G.add_node("person_1", type="schema:Person", name="John Smith", role="CEO")
+G.add_node("person_2", type="schema:Person", name="Sarah Johnson", role="CTO") 
+G.add_node("org_1", type="schema:Organization", name="TechCorp Inc")
+G.add_node("project_1", type="schema:Project", name="AI Initiative", budget=500000)
+
+# Add relationships
+G.add_edge("person_1", "org_1", type="LEADS", since="2020")
+G.add_edge("person_2", "org_1", type="WORKS_AT", department="Engineering")
+G.add_edge("person_2", "project_1", type="MANAGES", start_date="2023-01-01")
+
+# Add to environment
+source = environment.add_networkx_graph(
+    graph=G,
+    name="Organizational Structure",
+    description="Company hierarchy and project assignments",
+    metadata={"created_by": "HR_system", "version": "1.0"},
+    processing_config={
+        "generate_sentences": True,  # Generate natural language descriptions
+        "generate_facts": False,     # Skip fact generation
+        "extract_relations": True    # Extract relationship patterns
+    }
+)
+
+print(f"Added NetworkX graph: {source.id}")
+```
+
+#### NetworkX Graph Best Practices
+
+```python
+# Use meaningful node and edge attributes
+G = nx.MultiDiGraph()
+G.add_node("customer_123", 
+           type="schema:Person",
+           name="Alice Cooper", 
+           email="alice@example.com",
+           customer_since="2020-03-15")
+
+G.add_node("order_456",
+           type="schema:Order", 
+           total=1299.99,
+           status="completed",
+           date="2023-12-01")
+
+G.add_edge("customer_123", "order_456", 
+           type="PLACED_ORDER",
+           channel="online",
+           discount_applied=0.10)
 ```
 
 ### Retrieve Sources
@@ -100,24 +588,100 @@ Retrieve all sources in your environment.
 
 ```python
 sources = environment.get_sources()
+
+for source in sources:
+    print(f"Source: {source.name} (ID: {source.id})")
+    print(f"Created: {source.created_at}")
+    print(f"Description: {source.description}")
+    print(f"Status: {source.get_status()}")
 ```
 
-#### Get a Specific Source
+#### Get a Specific Source  
 
 Retrieve a specific source by ID or name.
 
 ```python
 # By ID
-source = environment.get_source(source_id="your-source-id")
+source = environment.get_source(id="your-source-id")
 
 # By name
-source = environment.get_source(source_name="My Source")
+source = environment.get_source(name="My Source")
+
+print(f"Found source: {source.name}")
+print(f"Status: {source.get_status()}")
 ```
 
 ## Error Handling
 
 The SDK includes built-in error handling for common scenarios:
 
-- `FileNotFoundError`: Raised when attempting to add a non-existent file
-- `ValueError`: Raised for invalid file extensions or missing required parameters
-- `APIError`: Raised for API-related errors
+```python
+from praxos_python.exceptions import APIError, APIKeyInvalidError
+
+try:
+    # Search operations
+    results = environment.search("complex query")
+    
+    # Source operations
+    source = environment.add_file("documents/report.pdf")
+    
+    # Extraction operations
+    entities = environment.extract_items("Person")
+    
+except FileNotFoundError:
+    print("File not found - check the file path")
+except ValueError as e:
+    print(f"Invalid parameters: {e}")
+except APIKeyInvalidError:
+    print("Invalid API key provided")
+except APIError as e:
+    print(f"API error: {e.message}")
+```
+
+### Common Error Scenarios
+
+- `FileNotFoundError`: File path doesn't exist when adding files
+- `ValueError`: Invalid file extensions, missing required parameters, or invalid search modality
+- `APIError`: General API errors (rate limits, server errors, etc.)
+- `APIKeyInvalidError`: Invalid or expired API key
+- `ImportError`: Missing dependencies (e.g., NetworkX for graph operations)
+
+## Performance Tips
+
+### Search Optimization
+
+```python
+# Use fast search for simple queries
+results = environment.search_fast("customer complaints", top_k=20)
+
+# Use graph search only when you need relationship context
+results = environment.search_graph("connected entities", top_k=10)
+
+# Combine search with extraction for comprehensive analysis
+search_results = environment.search("product reviews", top_k=50)
+review_entities = environment.extract_items("Review", top_k=100)
+```
+
+### Batch Operations
+
+```python
+# Process multiple sources efficiently
+files = ["report1.pdf", "report2.pdf", "report3.pdf"]
+sources = []
+
+for file_path in files:
+    source = environment.add_file(file_path)
+    sources.append(source)
+    
+# Extract from all sources
+all_entities = []
+for source in sources:
+    entities = environment.extract_items("Person", source_id=source.id)
+    all_entities.extend(entities)
+```
+
+## Related Documentation
+
+- [Client](/SDK/client) - Learn about the SyncClient and basic setup
+- [Ontology](/SDK/ontology) - Create schemas for entity extraction
+- [Source](/SDK/source) - Understand source objects and their methods

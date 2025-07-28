@@ -1,14 +1,13 @@
 ---
-title: 'Source'
-description: 'single source of knowledge'
+title: 'Source Management'
+description: 'Working with data sources in the Praxos Python SDK'
 ---
 
+# Source Management
 
-# Source
+The Source model represents a data source in the Praxos platform. Sources are containers for different types of data (files, conversations, business data, graphs) that get processed and made searchable within your environment.
 
-The Source model represents a data source in the Praxos platform. It provides functionality to interact with and manage data sources.
-
-## Properties
+## SyncSource Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
@@ -18,35 +17,349 @@ The Source model represents a data source in the Praxos platform. It provides fu
 | environment_id | string | ID of the environment this source belongs to |
 | description | string | Description of the source |
 
-## SyncSource
+## Creating Sources
 
-The `SyncSource` class represents a synchronous source resource.
+Sources are created through the Environment class using various `add_*` methods.
 
-## Methods
+### File Sources
 
-### get_status()
-
-Retrieves the current status of the source.
+Add PDF and JSON files to your environment.
 
 ```python
-source = SyncSource(...)
-status = source.get_status()
+from praxos_python import SyncClient
+
+client = SyncClient(api_key="your-api-key")
+environment = client.get_environment(name="my-environment")
+
+# Add a PDF document
+pdf_source = environment.add_file(
+    path="documents/annual_report.pdf",
+    name="2023 Annual Report",
+    description="Company annual financial report"
+)
+
+# Add a JSON data file
+json_source = environment.add_file(
+    path="data/sales_records.json",
+    name="Sales Data",
+    description="Monthly sales records"
+)
+
+print(f"PDF Source ID: {pdf_source.id}")
+print(f"JSON Source ID: {json_source.id}")
 ```
 
-**Returns:**
-- `string`: A string as a single word reperesending the current status of source.
+### Conversation Sources
 
-#### Example Usage
+Add chat conversations and message exchanges.
 
 ```python
-# Initialize a sync source
-source = environment.get_source(source_id="source id")
+from praxos_python.types import Message
 
-# Get source status
-status = source.get_status()
+# Using Message objects
+messages = [
+    Message(role="user", content="What's our customer satisfaction score?"),
+    Message(role="assistant", content="Current CSAT is 4.2/5 based on 1,200 responses."),
+    Message(role="user", content="What are the main complaint categories?"),
+    Message(role="assistant", content="Top issues: delivery delays (35%), product quality (28%), support response time (20%).")
+]
+
+conversation_source = environment.add_conversation(
+    messages=messages,
+    name="Customer Service Analysis",
+    description="Discussion about customer satisfaction metrics"
+)
+
+# Using dictionaries (simpler approach)
+messages_dict = [
+    {"role": "user", "content": "Review our Q4 performance"},
+    {"role": "assistant", "content": "Q4 exceeded targets by 15% with $2.8M revenue"},
+    {"role": "user", "content": "What drove the growth?"}
+]
+
+performance_source = environment.add_conversation(
+    messages=messages_dict,
+    name="Q4 Performance Review"
+)
 ```
 
-## Related Resources
+### Business Data Sources
 
-- [Environment](/environment)
-- [Client](/docs/client) 
+Add structured JSON data directly.
+
+```python
+# Customer data
+customer_data = {
+    "customers": [
+        {
+            "id": "cust_001",
+            "name": "ABC Corporation", 
+            "industry": "Technology",
+            "annual_revenue": 5000000,
+            "tier": "enterprise",
+            "contacts": [
+                {"name": "John Smith", "role": "CTO", "email": "john@abc.com"},
+                {"name": "Sarah Johnson", "role": "Procurement", "email": "sarah@abc.com"}
+            ]
+        },
+        {
+            "id": "cust_002",
+            "name": "XYZ Industries",
+            "industry": "Manufacturing", 
+            "annual_revenue": 2500000,
+            "tier": "mid-market"
+        }
+    ],
+    "metrics": {
+        "total_customers": 2,
+        "total_revenue": 7500000,
+        "average_deal_size": 3750000
+    }
+}
+
+customer_source = environment.add_business_data(
+    data=customer_data,
+    name="Customer Database",
+    description="Enterprise customer records and metrics",
+    root_entity_type="schema:Organization",
+    metadata={"source_system": "CRM", "last_updated": "2023-12-01"},
+    processing_config={
+        "generate_sentences": True,
+        "extract_relations": True,
+        "create_embeddings": True
+    }
+)
+```
+
+### NetworkX Graph Sources
+
+<div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 12px; margin: 16px 0;">
+<strong>⚠️ Dependency Required:</strong> NetworkX integration requires: <code>pip install networkx</code>
+</div>
+
+Add graph data using NetworkX.
+
+```python
+import networkx as nx
+
+# Create a project collaboration graph
+G = nx.MultiDiGraph()
+
+# Add team members
+G.add_node("emp_001", type="schema:Person", name="Alice Johnson", department="Engineering", role="Senior Developer")
+G.add_node("emp_002", type="schema:Person", name="Bob Smith", department="Product", role="Product Manager")
+G.add_node("emp_003", type="schema:Person", name="Carol Wilson", department="Design", role="UX Designer")
+
+# Add projects
+G.add_node("proj_001", type="schema:Project", name="Mobile App Redesign", budget=150000, priority="high")
+G.add_node("proj_002", type="schema:Project", name="API Migration", budget=75000, priority="medium")
+
+# Add relationships
+G.add_edge("emp_001", "proj_001", type="CONTRIBUTES_TO", role="lead_developer", hours_per_week=30)
+G.add_edge("emp_001", "proj_002", type="CONTRIBUTES_TO", role="technical_lead", hours_per_week=10)
+G.add_edge("emp_002", "proj_001", type="MANAGES", start_date="2023-10-01")
+G.add_edge("emp_003", "proj_001", type="CONTRIBUTES_TO", role="designer", hours_per_week=20)
+
+# Add to environment
+graph_source = environment.add_networkx_graph(
+    graph=G,
+    name="Project Team Structure",
+    description="Team assignments and project relationships",
+    metadata={"created_by": "project_management_system", "version": "1.2"},
+    processing_config={
+        "generate_sentences": True,
+        "generate_facts": False,
+        "extract_temporal_relations": True
+    }
+)
+
+print(f"Graph source created: {graph_source.id}")
+```
+
+## Working with Sources
+
+### Retrieving Sources
+
+```python
+# Get all sources in an environment
+all_sources = environment.get_sources()
+
+for source in all_sources:
+    print(f"Source: {source.name}")
+    print(f"  ID: {source.id}")
+    print(f"  Created: {source.created_at}")
+    print(f"  Description: {source.description}")
+    print(f"  Status: {source.get_status()}")
+    print()
+
+# Get a specific source by ID
+source = environment.get_source(id="source-123")
+
+# Get a specific source by name
+source = environment.get_source(name="Customer Database")
+```
+
+### Monitoring Source Status
+
+```python
+import time
+
+# Check processing status
+source = environment.get_source(name="Annual Report")
+status = source.get_status()
+
+print(f"Current status: {status}")
+
+# Common status values:
+# - "processing" - Source is being processed
+# - "completed" - Processing finished successfully  
+# - "failed" - Processing encountered an error
+# - "pending" - Source is queued for processing
+
+# Wait for processing to complete
+while status == "processing":
+    print("Still processing...")
+    time.sleep(30)  # Wait 30 seconds
+    status = source.get_status()
+
+if status == "completed":
+    print("Source ready for search and extraction!")
+    
+    # Now you can search the processed data
+    results = environment.search("key findings from annual report")
+    
+elif status == "failed":
+    print("Processing failed - check source data and try again")
+```
+
+## Source Types and Best Practices
+
+### File Sources
+
+**Best for:** Documents, reports, structured data files
+**Supported formats:** PDF, JSON
+**Processing:** Automatic text extraction, entity recognition, relationship mapping
+
+```python
+# Best practices for file sources
+source = environment.add_file(
+    path="reports/quarterly_earnings.pdf",
+    name="Q4 2023 Earnings Report",  # Descriptive, searchable name
+    description="Financial performance and key metrics for Q4 2023"  # Detailed context
+)
+```
+
+### Conversation Sources  
+
+**Best for:** Chat logs, meeting transcripts, Q&A sessions
+**Processing:** Speaker identification, topic extraction, intent analysis
+
+```python
+# Best practices for conversations
+messages = [
+    Message(role="interviewer", content="Tell me about your experience with cloud platforms"),
+    Message(role="candidate", content="I have 5 years with AWS and 3 years with Azure..."),
+    # Include role information for better context
+]
+
+source = environment.add_conversation(
+    messages=messages,
+    name="Senior DevOps Engineer Interview - Sarah Chen",
+    description="Technical interview covering cloud platforms, DevOps practices, and system architecture"
+)
+```
+
+### Business Data Sources
+
+**Best for:** CRM data, analytics, structured business records
+**Processing:** Entity extraction, relationship mapping, metric calculation
+
+```python
+# Best practices for business data
+data = {
+    "deals": [
+        {
+            "id": "deal_001",
+            "account": "TechCorp Inc",
+            "value": 250000,
+            "stage": "negotiation",
+            "close_date": "2024-01-15",
+            "owner": "sales_rep_003"
+        }
+    ]
+}
+
+source = environment.add_business_data(
+    data=data,
+    name="Q4 Sales Pipeline",
+    description="Active deals and sales opportunities for Q4 2023",
+    root_entity_type="schema:SalesOpportunity",  # Specify root type for better processing
+    processing_config={
+        "generate_sentences": True,  # Create searchable descriptions
+        "extract_relations": True,   # Map relationships between entities
+        "temporal_analysis": True    # Extract time-based patterns
+    }
+)
+```
+
+### NetworkX Graph Sources
+
+**Best for:** Organizational charts, social networks, system architectures
+**Processing:** Graph analysis, centrality metrics, community detection
+
+```python
+# Best practices for graph data
+G = nx.MultiDiGraph()
+
+# Use consistent node attributes
+G.add_node("person_001", 
+           type="schema:Person",           # Always include type
+           name="John Doe",                # Human-readable identifier
+           email="john@company.com",       # Unique attributes
+           department="Engineering",        # Categorical attributes
+           hire_date="2020-03-15")         # Temporal attributes
+
+# Use descriptive edge types and attributes
+G.add_edge("person_001", "project_001", 
+           type="ASSIGNED_TO",             # Clear relationship type
+           role="technical_lead",          # Role in relationship
+           start_date="2023-10-01",        # Temporal context
+           effort_percentage=75)           # Quantitative attributes
+```
+
+## Error Handling
+
+```python
+from praxos_python.exceptions import APIError, APIKeyInvalidError
+
+try:
+    # File operations
+    source = environment.add_file("documents/report.pdf")
+    
+except FileNotFoundError:
+    print("File not found - check the file path")
+    
+except ValueError as e:
+    print(f"Invalid file type or parameters: {e}")
+    
+except APIError as e:
+    print(f"API error during source creation: {e.message}")
+    
+except ImportError:
+    print("NetworkX required for graph operations: pip install networkx")
+
+# Check source status after creation
+try:
+    status = source.get_status()
+    if status == "failed":
+        print("Source processing failed - check data format and try again")
+        
+except APIError as e:
+    print(f"Failed to get source status: {e.message}")
+```
+
+## Related Documentation
+
+- [Environment](/SDK/environment) - Learn about environment management and search capabilities
+- [Client](/SDK/client) - Understanding the SyncClient and basic setup
+- [Ontology](/SDK/ontology) - Define schemas for better entity extraction 
