@@ -1,0 +1,325 @@
+---
+title: 'Data Types'
+description: 'Core data types and models used in the Praxos Python SDK'
+---
+
+# Data Types
+
+The Praxos Python SDK provides several core data types that you'll work with when building applications. These types ensure type safety and provide structured interfaces for common operations.
+
+## Message
+
+The `Message` class is used for conversation sources and chat-based interactions. It provides a structured way to represent messages with roles, content, and timestamps.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| content | string | The content/text of the message (required) |
+| role | string | The role of the message sender (optional) |
+| timestamp | datetime | When the message was created (auto-generated) |
+
+### Creating Messages
+
+```python
+from praxos_python.types import Message
+from datetime import datetime
+
+# Basic message creation
+message = Message(
+    content="Hello, how can I help you today?",
+    role="assistant"
+)
+
+# Message with custom timestamp
+message = Message(
+    content="I need help with my account",
+    role="user",
+    timestamp=datetime(2023, 12, 1, 14, 30, 0)
+)
+
+# Minimal message (only content required)
+message = Message(content="This is a message without role")
+
+print(f"Message: {message.content}")
+print(f"Role: {message.role}")
+print(f"Timestamp: {message.timestamp}")
+```
+
+### Working with Message Collections
+
+```python
+# Create a conversation
+messages = [
+    Message(role="user", content="What are our sales numbers for Q4?"),
+    Message(role="assistant", content="Q4 sales reached $2.8M, exceeding our target by 12%."),
+    Message(role="user", content="What were the main contributing factors?"),
+    Message(role="assistant", content="Key factors included: new product launch (40%), expanded territory (35%), and improved conversion rates (25%).")
+]
+
+# Add conversation to environment
+source = environment.add_conversation(
+    messages=messages,
+    name="Sales Performance Discussion",
+    description="Q4 sales analysis and contributing factors"
+)
+```
+
+### Message Serialization
+
+```python
+# Convert Message to dictionary
+message = Message(role="user", content="Sample message")
+message_dict = message.to_dict()
+
+print(message_dict)
+# Output: {
+#     "content": "Sample message",
+#     "role": "user", 
+#     "timestamp": "2023-12-01T14:30:00.123456"
+# }
+
+# Create Message from dictionary
+data = {
+    "content": "Response message",
+    "role": "assistant",
+    "timestamp": "2023-12-01T14:31:00.000000"
+}
+
+message = Message.from_dict(data)
+print(f"Loaded message: {message.content}")
+```
+
+### Common Message Patterns
+
+#### Customer Support Conversations
+
+```python
+support_messages = [
+    Message(role="customer", content="I'm having trouble accessing my account"),
+    Message(role="agent", content="I'd be happy to help. Can you provide your account email?"),
+    Message(role="customer", content="It's john.doe@example.com"),
+    Message(role="agent", content="I see the issue. Your account was temporarily locked. I've unlocked it now."),
+    Message(role="customer", content="Thank you! I can access it now.")
+]
+```
+
+#### Interview Transcripts
+
+```python
+interview_messages = [
+    Message(role="interviewer", content="Tell me about your experience with Python"),
+    Message(role="candidate", content="I have 5 years of Python experience, working primarily with Django and Flask frameworks"),
+    Message(role="interviewer", content="Can you describe a challenging project you worked on?"),
+    Message(role="candidate", content="I led the migration of a legacy system to microservices architecture...")
+]
+```
+
+#### Meeting Notes
+
+```python
+meeting_messages = [
+    Message(role="moderator", content="Let's discuss the Q1 roadmap priorities"),
+    Message(role="product_manager", content="Our top priority should be the mobile app redesign"),
+    Message(role="engineering_lead", content="We need to consider the technical debt in the API layer first"),
+    Message(role="ceo", content="What's the timeline and resource requirements for both initiatives?")
+]
+```
+
+## Context
+
+The `Context` class represents search results and contextual information returned from environment search operations. It contains the search score, data, and generated sentence for each result.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| score | float | Relevance score for the search result |
+| data | dict | Raw data associated with the result |
+| sentence | string | Human-readable sentence describing the result |
+
+### Working with Context Objects
+
+```python
+from praxos_python.models import Context
+
+# Get context from environment search
+context = environment.get_context(
+    query="What are the main business challenges?",
+    top_k=1
+)
+
+print(f"Relevance Score: {context.score}")
+print(f"Generated Sentence: {context.sentence}")
+print(f"Raw Data: {context.data}")
+
+# Get multiple context items
+contexts = environment.get_context(
+    query="key performance indicators",
+    top_k=5
+)
+
+for i, ctx in enumerate(contexts):
+    print(f"\nResult {i+1}:")
+    print(f"  Score: {ctx.score:.3f}")
+    print(f"  Content: {ctx.sentence}")
+    print(f"  Data Keys: {list(ctx.data.keys())}")
+```
+
+### Context in Search Results
+
+```python
+# Context objects are automatically created from search results
+results = environment.search("customer feedback analysis", top_k=10)
+
+# Convert search results to Context objects for consistent handling
+contexts = []
+for result in results:
+    context = Context(
+        score=result['score'],
+        data=result['data'],
+        sentence=result.get('sentence', '')
+    )
+    contexts.append(context)
+
+# Use contexts for LLM prompting
+prompt = "Based on the following context, provide a summary:\n\n"
+for ctx in contexts[:3]:  # Use top 3 results
+    prompt += f"- (Score: {ctx.score:.2f}) {ctx.sentence}\n"
+
+print(prompt)
+```
+
+### Context Filtering and Ranking
+
+```python
+# Get contexts and filter by relevance threshold
+contexts = environment.get_context("project milestones", top_k=20)
+
+# Filter high-relevance contexts
+high_relevance = [ctx for ctx in contexts if ctx.score > 0.8]
+medium_relevance = [ctx for ctx in contexts if 0.5 < ctx.score <= 0.8]
+
+print(f"High relevance results: {len(high_relevance)}")
+print(f"Medium relevance results: {len(medium_relevance)}")
+
+# Sort contexts by score (if not already sorted)
+sorted_contexts = sorted(contexts, key=lambda x: x.score, reverse=True)
+
+# Get the best context
+best_context = sorted_contexts[0]
+print(f"Best match: {best_context.sentence} (Score: {best_context.score})")
+```
+
+## Working with Dictionary Data
+
+While the SDK provides structured classes, you can also work with dictionary representations for flexibility.
+
+### Message Dictionaries
+
+```python
+# Create messages as dictionaries
+messages_dict = [
+    {"role": "user", "content": "What's the weather like?"},
+    {"role": "assistant", "content": "It's sunny and 75°F today."},
+    {"role": "user", "content": "Should I bring an umbrella?"}
+]
+
+# The SDK automatically converts dictionaries to Message objects
+source = environment.add_conversation(
+    messages=messages_dict,  # Accepts both Message objects and dicts
+    name="Weather Inquiry"
+)
+```
+
+### Mixed Format Handling
+
+```python
+# Mix Message objects and dictionaries
+mixed_messages = [
+    Message(role="interviewer", content="Welcome to the interview"),
+    {"role": "candidate", "content": "Thank you, I'm excited to be here"},
+    Message(role="interviewer", content="Let's start with your background"),
+    {"role": "candidate", "content": "I have 8 years in software development..."}
+]
+
+source = environment.add_conversation(messages=mixed_messages)
+```
+
+## Type Validation and Error Handling
+
+```python
+from praxos_python.types import Message
+from praxos_python.exceptions import APIError
+
+try:
+    # Message validation
+    message = Message(content="")  # Empty content
+except ValueError as e:
+    print(f"Validation error: {e}")
+
+try:
+    # Invalid timestamp format in from_dict
+    invalid_data = {
+        "content": "Test message",
+        "timestamp": "invalid-date-format"
+    }
+    message = Message.from_dict(invalid_data)
+except ValueError as e:
+    print(f"Timestamp parsing error: {e}")
+
+try:
+    # Context creation with missing data
+    context = Context(score=0.8, data={}, sentence="")
+    print(f"Context created: {context}")
+except Exception as e:
+    print(f"Context creation error: {e}")
+```
+
+## Best Practices
+
+### Message Best Practices
+
+1. **Include Role Information**: Always specify roles for better context understanding
+2. **Use Descriptive Roles**: Use specific roles like "customer", "agent", "interviewer" instead of generic "user"
+3. **Handle Timestamps**: Let the system auto-generate timestamps unless you need specific timing
+4. **Validate Content**: Ensure message content is meaningful and not empty
+
+```python
+# Good: Descriptive roles and meaningful content
+good_message = Message(
+    role="technical_interviewer",
+    content="Can you explain the difference between TCP and UDP protocols?"
+)
+
+# Avoid: Generic roles and minimal content
+avoid_message = Message(
+    role="user",
+    content="ok"
+)
+```
+
+### Context Best Practices
+
+1. **Set Appropriate Thresholds**: Filter contexts by relevance scores for quality
+2. **Limit Context Size**: Use reasonable top_k values to avoid information overload
+3. **Combine with Search**: Use Context objects consistently across search operations
+4. **Handle Empty Results**: Always check if contexts exist before using them
+
+```python
+# Good: Filtered, limited, and validated contexts
+contexts = environment.get_context("budget analysis", top_k=5)
+relevant_contexts = [ctx for ctx in contexts if ctx.score > 0.6]
+
+if relevant_contexts:
+    best_context = relevant_contexts[0]
+    summary = f"Based on the analysis: {best_context.sentence}"
+else:
+    summary = "No relevant information found for budget analysis"
+```
+
+## Related Documentation
+
+- [Environment](/SDK/environment) - Learn about search methods that return Context objects
+- [Source](/SDK/source) - Understand how Message objects are used in conversation sources
+- [Client](/SDK/client) - Basic SDK setup and configuration
