@@ -1,0 +1,363 @@
+---
+title: 'Intelligent Search'
+description: 'Deep dive into Praxos Intelligent Search capabilities, AI-powered query orchestration, multi-strategy execution, and advanced analytical operations.'
+---
+
+# Intelligent Search System
+
+Praxos Intelligent Search represents a paradigm shift from traditional keyword-based search to AI-powered knowledge discovery. The system automatically analyzes natural language queries, extracts temporal information, identifies relevant data types, and orchestrates multiple search strategies to deliver comprehensive results.
+
+## Overview
+
+The Intelligent Search system combines:
+- **AI Query Analysis** using Gemini 2.5 Flash
+- **Temporal Anchor Extraction** for time-based filtering  
+- **Multi-Strategy Execution** combining different search modalities
+- **Automated Analytics** with built-in statistical operations
+- **Graph-Aware Context** leveraging relationship data
+
+## Basic Usage
+
+### Simple Intelligent Search
+
+```python
+from praxos_python import SyncClient
+
+client = SyncClient(api_key="prx_your_api_key_here")
+environment = client.get_environment(name="financial_data")
+
+# AI automatically handles query analysis and strategy selection
+results = environment.intelligent_search(
+    query="Find highest transaction amounts in November 2023"
+)
+
+# Rich structured results
+for hit in results["hits"]:
+    print(f"Score: {hit['score']}")
+    print(f"Content: {hit['sentence']}")
+    print(f"Type: {hit.get('type', 'Unknown')}")
+
+# AI analysis insights
+analysis = results["intelligent_analysis"]
+print(f"Query Intent: {analysis.get('intent', 'unknown')}")
+print(f"Strategies Used: {analysis['strategies_used']}")
+```
+
+### Parameters and Options
+
+```python
+results = environment.intelligent_search(
+    query="premium customers with high transaction volumes",
+    max_results=25,                    # Number of results (default: 20)
+    source_id="source-123",            # Optional: specific source
+    enable_multi_strategy=True,        # Combine strategies (default: True)
+    force_strategy=None,               # Force specific strategy (optional)
+    include_graph_context=True,        # Include relationship data
+    anchors=[...],                     # Anchor constraints (optional)
+    max_hops=2                         # Graph traversal depth
+)
+```
+
+## AI Query Analysis
+
+### Automatic Temporal Extraction
+
+The system automatically identifies and extracts temporal information:
+
+```python
+# Example queries with automatic temporal detection
+queries = [
+    "revenue trends in Q4 2023",           # → Quarter(4) + Year(2023)
+    "meetings scheduled for December",      # → Month(12)
+    "transactions from last quarter",       # → Relative temporal
+    "annual performance in 2022",          # → Year(2022)
+    "monthly sales data for January"       # → Month(1)
+]
+
+for query in queries:
+    results = environment.intelligent_search(query)
+    
+    # Access extracted temporal anchors
+    temporal_anchors = results["intelligent_analysis"].get("temporal_anchors", [])
+    print(f"Query: {query}")
+    print(f"Extracted Anchors: {temporal_anchors}")
+```
+
+### Intent Classification
+
+The AI automatically classifies query intent and adapts search strategy:
+
+- **`find_entities`**: Searches for specific entities or objects
+- **`extract_literals`**: Focuses on extracting literal values (numbers, dates)
+- **`temporal_query`**: Time-based searches with temporal filtering
+- **`analytical_query`**: Queries requiring calculations (max, min, average)
+- **`relationship_query`**: Graph traversal and connection discovery
+
+```python
+# Different intent examples
+results = environment.intelligent_search("Who are our premium customers?")         # find_entities
+results = environment.intelligent_search("What's the average deal size?")          # analytical_query  
+results = environment.intelligent_search("Show me transactions in December")       # temporal_query
+results = environment.intelligent_search("Find connections between John and Mary") # relationship_query
+```
+
+### Type Detection and Unification
+
+The system identifies relevant entity and literal types from your ontology:
+
+```python
+results = environment.intelligent_search("financial transactions with high amounts")
+
+# AI identifies relevant types from your data
+analysis = results["intelligent_analysis"]
+print(f"Detected Types: {analysis.get('relevant_types', [])}")
+# Example output: ['FinancialTransaction', 'CurrencyAmountType', 'MonetaryValue']
+```
+
+## Multi-Strategy Execution
+
+### Strategy Selection
+
+Intelligent Search automatically selects and combines optimal strategies:
+
+- **`node_vec`**: Graph-aware vector search for entity discovery
+- **`fast`**: Quick Qdrant vector search for simple queries  
+- **`type_vec`**: Type-aware search with AI classification
+- **`analytical`**: Statistical operations on search results
+
+```python
+# Complex query using multiple strategies
+results = environment.intelligent_search(
+    "Find the top 5 highest revenue customers from Q4"
+)
+
+# Check which strategies were used
+strategies = results["intelligent_analysis"]["strategies_used"]
+print(f"Strategies: {strategies}")
+# Example: ['node_vec', 'analytical']
+```
+
+### Force Specific Strategy
+
+Override automatic selection when needed:
+
+```python
+# Force fast search for simple lookups
+results = environment.intelligent_search(
+    query="customer support tickets",
+    force_strategy="fast"
+)
+
+# Force graph search for relationship queries
+results = environment.intelligent_search(
+    query="entities connected to John Smith", 
+    force_strategy="node_vec",
+    include_graph_context=True
+)
+```
+
+## Analytical Operations
+
+### Built-in Analytics
+
+The system automatically performs calculations when queries suggest analytical intent:
+
+```python
+# Queries that trigger automatic analytics
+results = environment.intelligent_search("What's our highest revenue this quarter?")
+results = environment.intelligent_search("Show me the average transaction amount")
+results = environment.intelligent_search("Find the minimum order value")
+results = environment.intelligent_search("Count how many customers we have")
+
+# Access analytical results
+if "toolset_analysis" in results:
+    for operation in results["toolset_analysis"]:
+        print(f"Operation: {operation['operation']}")
+        
+        if operation['operation'] == 'find_maximum':
+            print(f"Highest Value: ${operation['max_value']:,.2f}")
+            print(f"Associated Item: {operation['max_item']}")
+            
+        elif operation['operation'] == 'calculate_average':
+            print(f"Average: ${operation['average_value']:,.2f}")
+            print(f"Total Items: {operation['total_items_analyzed']}")
+```
+
+### Available Operations
+
+| Operation | Description | Example Query |
+|-----------|-------------|---------------|
+| `find_maximum` | Find highest values | "What's our highest revenue?" |
+| `find_minimum` | Find lowest values | "Show me the smallest orders" |  
+| `calculate_average` | Calculate mean values | "What's the average deal size?" |
+| `sum_values` | Sum all values | "Total sales this quarter" |
+| `count_items` | Count and group items | "How many customers do we have?" |
+| `find_recent` | Find most recent items | "Latest customer feedback" |
+| `find_oldest` | Find oldest items | "Our earliest transactions" |
+
+## Advanced Features
+
+### Anchor-Based Constraints
+
+Combine intelligent search with anchor constraints for precise filtering:
+
+```python
+from praxos_python.types import KnownAnchor, TemporalAnchor
+
+# Complex anchored search
+results = environment.intelligent_search(
+    query="financial transactions with high amounts",
+    anchors=[
+        KnownAnchor(type="Person", value="John Smith", kind="entity"),
+        TemporalAnchor(type="YearNumberType", value="2023")
+    ],
+    max_hops=2
+)
+
+# The AI will:
+# 1. Identify "financial transactions" as target entities  
+# 2. Extract "high amounts" as analytical intent
+# 3. Apply anchor constraints (John Smith + 2023)
+# 4. Execute find_maximum operation on results
+```
+
+### Graph Context Integration
+
+Leverage graph relationships for contextual search:
+
+```python
+results = environment.intelligent_search(
+    query="business partners and their recent projects",
+    include_graph_context=True,
+    max_results=30
+)
+
+# Access graph context
+for hit in results["hits"]:
+    if "graph_context" in hit:
+        print(f"Node Type: {hit['graph_context'].get('node_type')}")
+        print(f"Relationships: {hit['graph_context'].get('relationships', [])}")
+        print(f"Connected Entities: {hit['graph_context'].get('connected_entities', [])}")
+```
+
+## Performance and Optimization
+
+### Response Structure
+
+```python
+{
+    "hits": [
+        {
+            "score": 0.95,
+            "sentence": "Generated description text",
+            "data": {...},
+            "type": "FinancialTransaction",
+            "graph_context": {...}  # When available
+        }
+    ],
+    "intelligent_analysis": {
+        "intent": "analytical_query",
+        "strategies_used": ["node_vec", "analytical"],
+        "temporal_anchors": [
+            {"type": "MonthOfYearType", "value": "11"},
+            {"type": "YearNumberType", "value": "2023"}
+        ],
+        "relevant_types": ["FinancialTransaction", "CurrencyAmountType"],
+        "query_analysis": "Find highest transaction amounts in November 2023",
+        "execution_time_ms": 245
+    },
+    "toolset_analysis": [
+        {
+            "operation": "find_maximum",
+            "field": "amount",
+            "max_value": 15750.00,
+            "max_item": "Transaction #TXN-2023-11-456",
+            "total_items_analyzed": 1247
+        }
+    ]
+}
+```
+
+### Best Practices
+
+```python
+# ✅ Good: Natural language queries
+results = environment.intelligent_search("Who are our highest value customers this year?")
+
+# ✅ Good: Specific temporal context
+results = environment.intelligent_search("Q4 revenue by product category")
+
+# ✅ Good: Analytical queries
+results = environment.intelligent_search("Average deal size for enterprise clients")
+
+# ❌ Avoid: Overly vague queries
+results = environment.intelligent_search("stuff")
+
+# ❌ Avoid: Pure keyword searches (use fast search instead)  
+results = environment.intelligent_search("transaction customer database")
+```
+
+## Error Handling
+
+```python
+from praxos_python.exceptions import APIError, APIKeyInvalidError
+
+try:
+    results = environment.intelligent_search(
+        "complex analytical query with temporal constraints"
+    )
+    
+    # Process results
+    if not results.get("hits"):
+        print("No results found for query")
+        
+    # Check for analysis errors
+    analysis = results.get("intelligent_analysis", {})
+    if "error" in analysis:
+        print(f"AI Analysis Error: {analysis['error']}")
+        
+except APIKeyInvalidError:
+    print("Invalid API key")
+except APIError as e:
+    print(f"Search API error: {e.message}")
+except Exception as e:
+    print(f"Unexpected error: {e}")
+```
+
+## Migration from Traditional Search
+
+### Before (Traditional)
+```python
+# Multiple manual steps required
+results = environment.search(
+    query="transaction data",
+    search_modality="node_vec",
+    node_type="FinancialTransaction",
+    temporal_filter={"timepoint_type": "Month", "time_period": "November"},
+    include_graph_context=True
+)
+
+# Manual analysis
+max_amount = 0
+for result in results:
+    amount = extract_amount_from_result(result)  # Custom parsing
+    if amount > max_amount:
+        max_amount = amount
+```
+
+### After (Intelligent Search)
+```python
+# Single AI-powered query
+results = environment.intelligent_search(
+    "Find the highest transaction amount in November"
+)
+
+# Automatic analysis included
+max_transaction = results["toolset_analysis"][0]["max_value"]
+```
+
+## Related Documentation
+
+- [Environment](/SDK/environment) - Complete Environment class reference
+- [Client](/SDK/client) - Basic client setup and configuration
+- [Search API](/api-reference/endpoint/search) - Low-level API details

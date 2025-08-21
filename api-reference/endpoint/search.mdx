@@ -2,3 +2,171 @@
 title: Search
 openapi: 'Post /search'
 ---
+
+# Search API
+
+The Search API provides multiple search modalities for querying your Praxos environment data, including our advanced **Intelligent Search** system that uses AI to orchestrate optimal search strategies.
+
+## Search Modalities
+
+### Intelligent Search (Recommended)
+- **`"intelligent"`** - AI-powered query orchestration with automatic strategy selection
+- Features: Natural language understanding, temporal extraction, multi-strategy execution, analytical operations
+- Best for: Complex queries, natural language input, business intelligence queries
+
+### Traditional Modalities
+- **`"fast"`** - Quick Qdrant vector search for simple lookups
+- **`"node_vec"`** - Graph-aware Neo4j search with relationship context
+- **`"vec_edge"`** - Edge-centric search for relationship queries  
+- **`"type_vec"`** - Type-aware search with AI classification
+
+## Example Requests
+
+### Intelligent Search
+```bash
+curl -X POST "https://api.praxos.ai/search" \
+  -H "api-key: prx_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Find highest transaction amounts in November 2023",
+    "environment_id": "env-123",
+    "search_modality": "intelligent",
+    "max_results": 20,
+    "enable_multi_strategy": true,
+    "include_graph_context": true
+  }'
+```
+
+### Traditional Search
+```bash
+curl -X POST "https://api.praxos.ai/search" \
+  -H "api-key: prx_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "customer complaints",
+    "environment_id": "env-123", 
+    "search_modality": "fast",
+    "top_k": 10,
+    "node_type": "schema:Review"
+  }'
+```
+
+## Request Parameters
+
+### Core Parameters
+- **`query`** (string, required): Search query text
+- **`environment_id`** (string, required): Target environment ID
+- **`search_modality`** (string): Search strategy ("intelligent", "fast", "node_vec", "vec_edge", "type_vec")
+
+### Intelligent Search Parameters  
+- **`max_results`** (integer): Number of results (default: 20)
+- **`enable_multi_strategy`** (boolean): Enable multiple strategies (default: true)
+- **`force_strategy`** (string): Force specific strategy (optional)
+- **`anchors`** (array): Anchor constraints for graph filtering
+
+### Filtering Parameters
+- **`source_id`** (string): Limit search to specific source
+- **`node_type`** (string): Filter by node type
+- **`node_kind`** (string): Filter by node kind (entity, literal, edge_sentence)
+- **`temporal_filter`** (object): Time-based filtering
+- **`include_graph_context`** (boolean): Include relationship data
+
+## Response Structure
+
+### Intelligent Search Response
+```json
+{
+  "hits": [
+    {
+      "score": 0.95,
+      "sentence": "High-value transaction of $15,750 processed in November 2023",
+      "data": {...},
+      "type": "FinancialTransaction",
+      "graph_context": {...}
+    }
+  ],
+  "intelligent_analysis": {
+    "intent": "analytical_query",
+    "strategies_used": ["node_vec", "analytical"],
+    "temporal_anchors": [
+      {"type": "MonthOfYearType", "value": "11"},
+      {"type": "YearNumberType", "value": "2023"}
+    ],
+    "relevant_types": ["FinancialTransaction", "CurrencyAmountType"],
+    "execution_time_ms": 245
+  },
+  "toolset_analysis": [
+    {
+      "operation": "find_maximum",
+      "field": "amount", 
+      "max_value": 15750.00,
+      "max_item": "Transaction #TXN-2023-11-456",
+      "total_items_analyzed": 1247
+    }
+  ]
+}
+```
+
+### Traditional Search Response
+```json
+{
+  "hits": [
+    {
+      "score": 0.85,
+      "data": {...},
+      "sentence": "Generated description text"
+    }
+  ],
+  "total": 150,
+  "execution_time_ms": 45
+}
+```
+
+## Analytical Operations
+
+When using intelligent search, the system automatically performs relevant analytical operations:
+
+| Operation | Trigger Keywords | Response Field |
+|-----------|------------------|----------------|
+| `find_maximum` | "highest", "maximum", "top", "largest" | `max_value`, `max_item` |
+| `find_minimum` | "lowest", "minimum", "smallest" | `min_value`, `min_item` |
+| `calculate_average` | "average", "mean" | `average_value`, `total_items` |
+| `sum_values` | "total", "sum", "combined" | `sum_value`, `items_count` |
+| `count_items` | "count", "how many", "number of" | `count`, `groups` |
+
+## Error Responses
+
+```json
+{
+  "error": {
+    "code": "INVALID_SEARCH_MODALITY",
+    "message": "Unsupported search modality: invalid_mode",
+    "details": {
+      "supported_modalities": ["intelligent", "fast", "node_vec", "vec_edge", "type_vec"]
+    }
+  }
+}
+```
+
+## SDK Integration
+
+Using the Python SDK (recommended):
+
+```python
+from praxos_python import SyncClient
+
+client = SyncClient(api_key="prx_your_api_key_here")
+environment = client.get_environment(id="env-123")
+
+# Intelligent search
+results = environment.intelligent_search(
+    query="Find highest transaction amounts in November 2023"
+)
+
+# Traditional search  
+results = environment.search(
+    query="customer complaints",
+    search_modality="fast",
+    top_k=10
+)
+```
