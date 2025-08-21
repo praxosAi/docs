@@ -5,8 +5,21 @@ description: 'The Praxos Python client provides a synchronous interface for inte
 
 ## Installation
 
+Install the latest version of the Praxos Python SDK:
+
 ```bash
 pip install -U praxos-python
+```
+
+**Current Version**: 0.3.2+
+**Python Compatibility**: Python 3.8+
+**Dependencies**: `pydantic`, `httpx`
+
+For development installation from source:
+```bash
+git clone https://github.com/praxos/praxos-python
+cd praxos-python
+pip install -e .
 ```
 
 ## Getting Started
@@ -24,9 +37,32 @@ client = SyncClient(api_key="your-api-key")
 The client accepts several configuration options:
 
 - `api_key` (required): Your Praxos API key
-- `base_url` (optional): Custom base URL for the API
+- `base_url` (optional): Custom base URL for the API (default: "https://api.praxos.ai/")
 - `params` (optional): Additional query parameters to include in all requests
 - `timeout` (optional): Request timeout in seconds (default: 10.0)
+
+```python
+# Advanced client configuration
+client = SyncClient(
+    api_key="prx_your_api_key_here",
+    base_url="https://api.praxos.ai/",
+    timeout=30.0,
+    params={"version": "v1"}  # Optional global parameters
+)
+```
+
+### API Key Validation
+
+The client includes built-in API key validation:
+
+```python
+# Validate your API key
+try:
+    is_valid = client.validate_api_key()
+    print(f"API key is valid: {is_valid}")
+except APIKeyInvalidError:
+    print("Invalid API key - please check your credentials")
+```
 
 ## Environment Management
 

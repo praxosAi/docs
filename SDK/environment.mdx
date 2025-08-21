@@ -34,17 +34,71 @@ For more detail see [Client doc](/SDK/client).
 
 ## Search Methods
 
-Praxos offers multiple search modalities optimized for different use cases, from fast vector search to complex graph traversal.
+Praxos offers multiple search modalities optimized for different use cases, from fast vector search to complex graph traversal, with our newest **Intelligent Search** providing AI-powered query orchestration.
+
+### Intelligent Search (Recommended)
+
+The intelligent search system uses AI to automatically analyze queries, extract temporal information, identify relevant types, and select optimal search strategies.
+
+```python
+# AI-powered intelligent search (recommended for most use cases)
+results = environment.intelligent_search(
+    query="Find highest transaction amounts in November 2023",
+    max_results=20,
+    source_id="source-123",  # Optional: limit to specific source
+    enable_multi_strategy=True,  # Default: combine multiple approaches
+    force_strategy=None  # Optional: force specific strategy
+)
+
+# Rich results with AI analysis
+for hit in results["hits"]:
+    print(f"Score: {hit['score']}")
+    print(f"Content: {hit['sentence']}")
+    print(f"Type: {hit.get('type', 'Unknown')}")
+
+# Access AI analysis insights
+analysis = results["intelligent_analysis"]
+print(f"Strategies used: {analysis['strategies_used']}")
+print(f"Temporal anchors: {analysis.get('temporal_anchors', [])}")
+print(f"Query intent: {analysis.get('intent', 'unknown')}")
+
+# Built-in analytical operations (when applicable)
+if "toolset_analysis" in results:
+    for operation in results["toolset_analysis"]:
+        print(f"Operation: {operation['operation']}")
+        if operation['operation'] == 'find_maximum':
+            print(f"Highest value: {operation['max_value']}")
+        elif operation['operation'] == 'calculate_average':
+            print(f"Average: {operation['average_value']}")
+```
+
+#### What Intelligent Search Does Automatically
+
+- **Query Analysis**: Understands natural language intent
+- **Temporal Extraction**: Finds dates, months, quarters, years
+- **Type Detection**: Identifies relevant entity/literal types
+- **Strategy Selection**: Chooses optimal search approaches
+- **Multi-Strategy Execution**: Combines results from multiple modalities
+- **Analytical Operations**: Performs calculations when needed (max, min, average, count, etc.)
+
+```python
+# Examples of intelligent queries
+results = environment.intelligent_search("Who are the premium customers from last quarter?")
+results = environment.intelligent_search("What's our average deal size this year?")  
+results = environment.intelligent_search("Find all meetings with external partners in December")
+results = environment.intelligent_search("Show me the top 5 revenue generating products")
+```
 
 ### Basic Search
 
 The unified search method provides access to all search modalities with extensive filtering options.
 
 ```python
-# Basic search with default settings (fast modality)
+# Basic search with default settings (intelligent modality)
 results = environment.search(
     query="Find information about customer complaints",
-    top_k=10
+    top_k=10,
+    search_modality="intelligent"  # Default modality
 )
 
 for result in results:
@@ -53,6 +107,26 @@ for result in results:
 ```
 
 ### Search Modalities
+
+All search modalities can be accessed through the unified `search()` method or via dedicated methods for specific use cases.
+
+#### Intelligent Search (Default)
+AI-powered query orchestration that automatically selects and combines optimal search strategies.
+
+```python
+# Using the general search method (intelligent is default)
+results = environment.search(
+    query="revenue trends for enterprise clients in Q4",
+    search_modality="intelligent",
+    max_results=25
+)
+
+# Using the dedicated intelligent search method (recommended)
+results = environment.intelligent_search(
+    query="revenue trends for enterprise clients in Q4",
+    max_results=25
+)
+```
 
 #### Fast Search (Qdrant)
 Optimized for speed with basic filtering. Best for quick lookups and simple queries.
@@ -183,7 +257,43 @@ results = environment.search_sentences(
 
 ### Anchor-Based Search
 
-Search within k-hops of specific anchor points for localized exploration.
+Search within k-hops of specific anchor points for localized exploration. This powerful feature enables precise relationship-based filtering and graph traversal.
+
+#### Types of Anchors
+
+**Known Anchors**: Filter by proximity to specific entities
+```python
+from praxos_python.types import KnownAnchor
+
+known_anchor = KnownAnchor(
+    type="Person", 
+    value="John Smith", 
+    kind="entity"
+)
+```
+
+**Temporal Anchors**: Filter by time-based relationships  
+```python
+from praxos_python.types import TemporalAnchor
+
+temporal_anchor = TemporalAnchor(
+    type="YearNumberType", 
+    value="2023"
+)
+```
+
+**Mixed Anchor Constraints**: Combine multiple anchor types
+```python
+# Find all financial transactions within 2 hops of John Smith in 2023
+results = environment.intelligent_search(
+    query="financial transactions", 
+    anchors=[
+        KnownAnchor(type="Person", value="John Smith", kind="entity"),
+        TemporalAnchor(type="YearNumberType", value="2023")
+    ],
+    max_hops=2
+)
+```
 
 #### Search from Anchors
 ```python
@@ -294,7 +404,7 @@ for context in contexts:
 
 ## Data Extraction Methods
 
-Extract structured data from your processed sources using your ontology schemas.
+Extract structured data from your processed sources using your ontology schemas. Advanced extraction supports anchor-based constraints for precise relationship filtering.
 
 ### Extract Entities
 
@@ -370,6 +480,76 @@ addresses = environment.extract_literals("AddressType", mode="full_entities")
 # Extract dates
 dates = environment.extract_literals("DateType", mode="literals_only")
 ```
+
+### Anchored Extraction (Advanced)
+
+Extract entities or literals within relationship proximity of anchor points, enabling precise graph-based filtering.
+
+#### Anchored Entity Extraction
+
+```python
+from praxos_python.types import KnownAnchor, TemporalAnchor
+
+# Extract all vehicles within 2 hops of John Smith
+anchors = [
+    KnownAnchor(type="Person", value="John Smith", kind="entity")
+]
+
+vehicles = environment.extract_items(
+    schema="Vehicle",
+    anchors=anchors,
+    max_hops=2,
+    top_k=50
+)
+
+# Extract financial transactions for 2023 data
+temporal_anchors = [
+    TemporalAnchor(type="YearNumberType", value="2023")
+]
+
+transactions = environment.extract_items(
+    schema="FinancialTransaction",
+    anchors=temporal_anchors,
+    max_hops=1,
+    source_id="banking_data"
+)
+```
+
+#### Anchored Literal Extraction
+
+```python
+# Extract phone numbers related to specific organization within 3 hops
+org_anchor = KnownAnchor(
+    type="Organization", 
+    value="TechCorp Inc", 
+    kind="entity"
+)
+
+phones = environment.extract_literals(
+    literal_type="PhoneNumberType",
+    mode="full_entities",
+    anchors=[org_anchor],
+    max_hops=3
+)
+
+# Extract email addresses from Q4 2023 communications
+temporal_anchor = TemporalAnchor(type="MonthOfYearType", value="12")
+year_anchor = TemporalAnchor(type="YearNumberType", value="2023")
+
+emails = environment.extract_literals(
+    literal_type="EmailType", 
+    mode="literals_only",
+    anchors=[temporal_anchor, year_anchor],
+    max_hops=2
+)
+```
+
+#### Benefits of Anchored Extraction
+
+- **Precision**: Extract only relevant entities within specific relationship contexts
+- **Performance**: Significantly faster than filtering entire datasets  
+- **Context-Aware**: Maintain graph relationships and entity connections
+- **Flexible**: Combine multiple anchor types for complex constraints
 
 ## Graph Data Methods
 
