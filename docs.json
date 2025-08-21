@@ -27,11 +27,23 @@
       },
       {
         "tab": "SDK",
-        "pages": [
-          "SDK/client",
-          "SDK/environment",
-          "SDK/source",
-          "SDK/ontology"
+        "groups": [
+          {
+            "group": "Core SDK",
+            "pages": [
+              "SDK/client",
+              "SDK/environment",
+              "SDK/source",
+              "SDK/ontology",
+              "SDK/data-types"
+            ]
+          },
+          {
+            "group": "Advanced Features",
+            "pages": [
+              "SDK/intelligent-search"
+            ]
+          }
         ]
       },
       {

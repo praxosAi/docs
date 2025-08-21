@@ -10,15 +10,16 @@ This quickstart guide will help you integrate and utilize the Praxos effectively
 - Configure your development environment
 - Initialize the Praxos client
 - Create and manage environments
-- Add conversations to the knowledge graph
-- Retrieve contextual information
+- Add data sources to your knowledge graph
+- Use Intelligent Search for AI-powered queries
+- Extract structured information from your data
 
 ## Prerequisites
 
 Before you begin, ensure you have:
 
 - A valid Praxos API key (see [API Key Instructions](/api-key))
-- Python 3.6 or higher installed
+- Python 3.8 or higher installed
 - Basic understanding of Python programming
 
 ## Environment Setup
@@ -32,11 +33,11 @@ pip install -U praxos-python
 2. Configure your API key:
 
 ```python
-import requests
-
 # Replace with your Praxos API key
-API_KEY = "YOUR_API_KEY"
+API_KEY = "prx_your_api_key_here"
 ```
+
+**Note**: Your API key should start with `prx_` and can be found in your [Praxos Dashboard](https://data.praxos.ai).
 
 ## Initialize the Client
 
@@ -48,58 +49,190 @@ from praxos_python import SyncClient
 # Initialize the client with your API key
 client = SyncClient(api_key=API_KEY)
 
-# Create a new environment
-env = client.create_environment(name="MyEnvironment")
+# Validate your API key
+try:
+    is_valid = client.validate_api_key()
+    print(f"API key is valid: {is_valid}")
+except Exception as e:
+    print(f"API key validation failed: {e}")
+
+# Create a new environment or get an existing one
+env = client.create_environment(name="my-quickstart-environment")
+
+# Alternative: Get an existing environment
+# env = client.get_environment(name="my-quickstart-environment")
 ```
 
-To learn more about client please review [this page](SDK/client).
+To learn more about the client, please review [this page](/SDK/client).
 
-## Add Conversations to Knowledge Graph
+## Add Data Sources to Your Knowledge Graph
 
-Add LLM conversations to the Praxos knowledge graph:
+Praxos supports multiple data source types. Let's start with adding a conversation and a business data file:
+
+### Add a Conversation
 
 ```python
-from raxos_python.types.message import Message
+from praxos_python.types import Message
 
+# Create conversation messages
 messages = [
-    Message(role="user", content="Hello, I am using Praxos knowledge graph, and it's awesome."),
-    Message(role="assistant", content="Hi there! I'm glad you're exploring Praxos knowledge graph. It's a powerful tool for managing and retrieving contextual information.")
+    Message(role="user", content="What are our Q4 sales targets for enterprise clients?"),
+    Message(role="assistant", content="Q4 targets are $2.5M with focus on Fortune 500 companies."),
+    Message(role="user", content="What about our current pipeline?"),
+    Message(role="assistant", content="Current pipeline shows $1.8M in qualified opportunities.")
 ]
 
-source = env.add_conversation(
+conversation_source = env.add_conversation(
     messages=messages,
-    source_name="My Conversation",  # Optional identifier
-    description="A sample conversation"  # Optional description
+    name="Sales Planning Discussion",
+    description="Q4 sales targets and pipeline review"
 )
 ```
-To learn more about environment please review [this page](SDK/environment). 
+
+### Add Business Data
+
+```python
+# Sample business data
+business_data = {
+    "customers": [
+        {"name": "TechCorp Inc", "tier": "enterprise", "revenue": 250000, "industry": "Technology"},
+        {"name": "Global Manufacturing", "tier": "premium", "revenue": 180000, "industry": "Manufacturing"},
+        {"name": "StartupXYZ", "tier": "basic", "revenue": 25000, "industry": "Software"}
+    ],
+    "quarterly_targets": {
+        "Q4_2023": {"target": 2500000, "current": 1800000, "forecast": 2200000}
+    }
+}
+
+data_source = env.add_business_data(
+    data=business_data,
+    name="Customer and Sales Data",
+    description="Q4 customer information and sales targets"
+)
+```
+
+To learn more about environment capabilities, please review [this page](/SDK/environment). 
 
 ## Monitor Indexing Status
 
-The knowledge graph requires time to index new sources. Indexing duration varies based on source size. Ensure indexing is complete before querying:
+The knowledge graph requires time to index new sources. Indexing duration varies based on source size. Monitor the status before querying:
 
 ```python
 import time
 
-# Wait for indexing to complete
-while source.get_status() != "success":
-    time.sleep(1)
+# Check status of both sources
+sources = [conversation_source, data_source]
+
+for source in sources:
+    print(f"Checking status for: {source.name}")
+    
+    # Wait for indexing to complete
+    while source.get_status() != "success":
+        status = source.get_status()
+        print(f"Status: {status}...")
+        if status == "failed":
+            print("Indexing failed!")
+            break
+        time.sleep(2)
+    
+    print(f"✅ {source.name} is ready!")
 ```
-More document about source is available [here](SDK/source)
 
-## Retrieve Contextual Information
+More documentation about sources is available [here](/SDK/source).
 
-Query the knowledge graph to retrieve relevant context:
+## Use Intelligent Search (Recommended)
+
+Now that your data is indexed, use Praxos's AI-powered Intelligent Search for natural language queries:
 
 ```python
-# Query the knowledge graph
-context = env.get_context("what is the name of knowledge graph tool?")
-print(context.sentence)
+# Ask natural language questions about your data
+results = env.intelligent_search("What are our highest revenue customers?")
+
+print("=== Search Results ===")
+for hit in results["hits"]:
+    print(f"Score: {hit['score']:.2f}")
+    print(f"Content: {hit['sentence']}")
+    print("---")
+
+# Access AI analysis insights
+analysis = results["intelligent_analysis"]
+print(f"\n=== AI Analysis ===")
+print(f"Query Intent: {analysis.get('intent', 'unknown')}")
+print(f"Strategies Used: {analysis['strategies_used']}")
+
+# Check for automatic analytical operations
+if "toolset_analysis" in results:
+    print(f"\n=== Analytical Results ===")
+    for operation in results["toolset_analysis"]:
+        if operation['operation'] == 'find_maximum':
+            print(f"Highest Revenue: ${operation['max_value']:,.2f}")
+            print(f"Customer: {operation['max_item']}")
 ```
 
-Example output:
-```
-a KnowledgeGraphTool, (which is a Tool), (category: Physical), identified as '67B770787F48A6Eac8C8B578 683A42Bb3983E0Bef0E2D031 683A42Bb3983E0Bef0E2D030 0 Tool Praxoskg', which has attribute ToolName 'Praxos knowledge graph' (base: NameType), and has attribute ToolFunctionalityDescription 'powerful tool for managing and retrieving contextual information' (base: DescriptionType). has attribute ToolName 'Praxos knowledge graph' (base: NameType).
+### More Natural Language Queries
+
+```python
+# Ask about sales targets
+results = env.intelligent_search("What are our Q4 sales targets and current progress?")
+
+# Ask analytical questions
+results = env.intelligent_search("What's the average customer revenue by industry?")
+
+# Ask temporal questions
+results = env.intelligent_search("Show me enterprise customers with revenue above $200k")
+
+# The AI automatically:
+# - Understands the query intent
+# - Identifies relevant data types
+# - Selects optimal search strategies  
+# - Performs calculations when needed
 ```
 
-The retrieved context can be utilized to enhance LLM responses for your specific use case.
+## Extract Structured Information
+
+Extract specific data types from your indexed sources:
+
+```python
+# Extract customer entities
+customers = env.extract_items(
+    schema="Customer",  # Assumes you have a Customer schema in your ontology
+    top_k=50
+)
+
+# Extract revenue amounts
+revenue_data = env.extract_literals(
+    literal_type="CurrencyAmountType",
+    mode="full_entities",
+    top_k=100
+)
+
+print(f"Found {len(customers)} customers and {len(revenue_data['items'])} revenue records")
+```
+
+## Legacy Context Retrieval
+
+For simple context retrieval (legacy method):
+
+```python
+# Simple context query  
+context = env.get_context("what are the sales targets?")
+print(f"Context: {context.sentence}")
+print(f"Relevance Score: {context.score}")
+```
+
+## Next Steps
+
+Congratulations! You've successfully:
+- ✅ Set up the Praxos Python SDK  
+- ✅ Created an environment and added data sources
+- ✅ Used AI-powered Intelligent Search
+- ✅ Extracted structured information
+
+### Explore Advanced Features
+
+- **[Intelligent Search](/SDK/intelligent-search)** - Deep dive into AI-powered search capabilities
+- **[Environment Guide](/SDK/environment)** - Complete environment management
+- **[Ontology Setup](/SDK/ontology)** - Define schemas for better entity extraction
+- **[API Reference](/api-reference/endpoint/search)** - Low-level API details
+
+The retrieved information can be utilized to enhance LLM responses, build RAG applications, or power business intelligence dashboards for your specific use case.

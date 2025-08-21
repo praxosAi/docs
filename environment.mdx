@@ -5,16 +5,23 @@ title: 'Environment'
 ## Overview
 In our knowledge graph service, an Environment acts as a logical container that isolates sources within a user's workspace. This allows users to create and manage multiple knowledge graphs independently under the same account.
 
+Each environment provides powerful AI-driven search capabilities through our **Intelligent Search** system, enabling natural language queries, automatic analytical operations, and sophisticated graph traversal.
+
 ## Why Use Environments?
 AI agents often interact with diverse and unrelated sets of information. Environments provide a clean way to separate these contexts, ensuring that data from one use case or project does not interfere with another. This is especially useful when:
-- Building independent knowledge graphs for different agents or domains
-- Running isolated queries and evaluations
-- Managing context-specific memory for AI workflows
+
+- **Domain-Specific Knowledge Graphs**: Separate financial data from customer support conversations
+- **Multi-Tenant Applications**: Isolate data between different clients or organizations  
+- **Specialized AI Agents**: Create focused contexts for specific agent capabilities
+- **Development vs Production**: Maintain separate environments for testing and live data
+- **Compliance and Security**: Ensure sensitive data remains isolated from general datasets
 
 ## Key Characteristics
-- Isolation: Sources stored in one environment are not accessible from another. This guarantees clean separation of information.
-- Scoped Queries: All graph operations and queries are performed within the context of a specific environment.
-- Flexibility: Users can create as many environments as needed, allowing for fine-grained control over their memory architecture.
+- **Data Isolation**: Sources stored in one environment are not accessible from another, guaranteeing clean separation of information
+- **Scoped Operations**: All search, extraction, and graph operations are performed within the context of a specific environment
+- **AI-Powered Search**: Each environment includes intelligent search capabilities with natural language understanding
+- **Flexible Architecture**: Create unlimited environments for fine-grained control over your knowledge graphs
+- **Multi-Modal Search**: Support for vector search, graph traversal, type-aware queries, and analytical operations
 
 ## Structure
 Each environment has the following properties:
@@ -31,7 +38,67 @@ Environment names must be unique across all of a user's environments. Attempting
 ## Relationship with Sources
 Every source must be associated with exactly one environment. This ensures that all knowledge derived from a source is scoped correctly and remains isolated within its intended graph.
 
-- [Environment api](/api-reference/endpoint/environment/get-environment)
-- [SDK doc](/SDK/environment)
+### Supported Source Types
+- **Conversations**: Chat messages, dialogues, and communication threads
+- **Business Data**: JSON datasets, customer records, financial data
+- **Files**: PDF documents, structured data files  
+- **NetworkX Graphs**: Direct graph imports for complex relationship data
+
+## Search and Analytics Capabilities
+
+Each environment provides advanced search functionality:
+
+```python
+from praxos_python import SyncClient
+
+client = SyncClient(api_key="prx_your_api_key_here")
+env = client.get_environment(name="financial_analysis")
+
+# Natural language queries with AI analysis
+results = env.intelligent_search("What are the highest risk transactions this quarter?")
+
+# Automatic analytical operations  
+results = env.intelligent_search("Calculate average deal size by customer tier")
+
+# Graph-aware relationship queries
+results = env.intelligent_search("Find all entities connected to suspicious accounts")
+```
+
+## Example Use Cases
+
+### Financial Services Environment
+```python
+# Create specialized environment for financial data
+financial_env = client.create_environment(
+    name="financial_compliance",
+    description="Financial transactions and compliance monitoring"
+)
+
+# Query with domain-specific intelligence
+suspicious_transactions = financial_env.intelligent_search(
+    "Find transactions above $10k with high risk indicators"
+)
+```
+
+### Customer Support Environment  
+```python
+# Separate environment for customer interactions
+support_env = client.create_environment(
+    name="customer_support", 
+    description="Customer conversations and issue tracking"
+)
+
+# Analyze support patterns
+issue_analysis = support_env.intelligent_search(
+    "What are the most common customer complaints this month?"
+)
+```
+
+## Related Documentation
+
+- **[Environment API](/api-reference/endpoint/environment/get-environment)** - REST API reference
+- **[SDK Environment Guide](/SDK/environment)** - Complete Python SDK documentation  
+- **[Intelligent Search](/SDK/intelligent-search)** - Advanced search capabilities
+- **[Source Management](/SDK/source)** - Adding and managing data sources
 
 
